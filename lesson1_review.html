@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1 · My Name Is Amy 복습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple-light:#EEEDFE;
+    --purple-mid:#AFA9EC;
+    --purple:#7F77DD;
+    --purple-dark:#3C3489;
+    --teal-light:#E1F5EE;
+    --teal:#1D9E75;
+    --teal-dark:#085041;
+    --amber-light:#FAEEDA;
+    --amber:#BA7517;
+    --amber-dark:#633806;
+    --coral-light:#FAECE7;
+    --coral:#D85A30;
+    --coral-dark:#4A1B0C;
+    --blue-light:#E6F1FB;
+    --blue:#378ADD;
+    --blue-dark:#042C53;
+    --green-light:#EAF3DE;
+    --green:#639922;
+    --green-dark:#173404;
+    --red-light:#FCEBEB;
+    --red:#E24B4A;
+    --red-dark:#501313;
+    --bg:#F7F6FF;
+    --card:#FFFFFF;
+    --text:#1a1a2e;
+    --text-sub:#5a5a7a;
+    --border:#E2E0F4;
+    --radius:14px;
+    --radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Nunito','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* ── HEADER ── */
+  header{background:linear-gradient(135deg,#534AB7 0%,#7F77DD 50%,#AFA9EC 100%);padding:3rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+  .header-badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.08em;margin-bottom:.75rem;}
+  header h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:900;color:#fff;line-height:1.1;margin-bottom:.5rem;}
+  header h1 em{font-style:normal;color:#FAC775;}
+  header p{font-size:1rem;color:rgba(255,255,255,.8);font-family:'Noto Sans KR',sans-serif;}
+
+  /* ── NAV TABS ── */
+  .tab-wrap{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(83,74,183,.08);}
+  .tabs{display:flex;overflow-x:auto;scrollbar-width:none;max-width:900px;margin:0 auto;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:1;min-width:100px;padding:.9rem .5rem;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:700;color:var(--text-sub);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+  .tab.active{color:var(--purple-dark);border-bottom-color:var(--purple);}
+  .tab:hover:not(.active){color:var(--text);}
+
+  /* ── MAIN ── */
+  main{max-width:900px;margin:-2.5rem auto 0;padding:0 1rem 4rem;}
+  .panel{display:none;animation:fadeIn .3s ease;}
+  .panel.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── SECTION LABEL ── */
+  .sec-label{font-size:.75rem;font-weight:800;letter-spacing:.1em;color:var(--purple);text-transform:uppercase;margin-bottom:1rem;margin-top:2rem;}
+  .sec-label:first-child{margin-top:0;}
+
+  /* ── CARDS ── */
+  .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+  .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;}
+
+  /* ── EXPRESSION CARDS ── */
+  .expr-tag{display:inline-block;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:20px;margin-bottom:.6rem;letter-spacing:.05em;}
+  .tag-q{background:var(--blue-light);color:var(--blue-dark);}
+  .tag-greet{background:var(--amber-light);color:var(--amber-dark);}
+  .tag-intro{background:var(--teal-light);color:var(--teal-dark);}
+  .tag-self{background:var(--purple-light);color:var(--purple-dark);}
+  .expr-en{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:2px;}
+  .expr-ko{font-size:.85rem;color:var(--text-sub);font-family:'Noto Sans KR',sans-serif;}
+  .expr-arrow{color:var(--purple-mid);font-size:.8rem;margin:.5rem 0;}
+  .expr-resp .expr-en{font-size:1rem;color:var(--purple-dark);}
+  .highlight{color:var(--purple);font-style:italic;}
+
+  /* ── DIALOGUE BOX ── */
+  .dialogue{background:var(--purple-light);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+  .dialogue-title{font-size:.75rem;font-weight:800;color:var(--purple-dark);letter-spacing:.08em;margin-bottom:.75rem;}
+  .line{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.5rem;}
+  .line:last-child{margin-bottom:0;}
+  .speaker{font-size:.75rem;font-weight:800;color:var(--purple);min-width:60px;padding-top:2px;font-family:'Noto Sans KR',sans-serif;}
+  .speech{font-size:.95rem;font-weight:600;color:var(--text);}
+  .speech small{display:block;font-size:.78rem;color:var(--text-sub);font-weight:400;font-family:'Noto Sans KR',sans-serif;}
+
+  /* ── VOCABULARY ── */
+  .voca-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.75rem;}
+  .vcard{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:.85rem .75rem;text-align:center;cursor:pointer;transition:all .25s;user-select:none;position:relative;}
+  .vcard:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,119,221,.18);}
+  .vcard.flipped{background:var(--purple-light);border-color:var(--purple);}
+  .vcard .en{font-size:1rem;font-weight:800;color:var(--text);}
+  .vcard .ko{font-size:.82rem;color:var(--text-sub);margin-top:3px;font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+  .vcard.flipped .ko{color:var(--purple-dark);font-weight:700;}
+  .vcard .hint{font-size:.65rem;color:var(--purple-mid);margin-top:4px;}
+
+  /* ── TIME GRID ── */
+  .time-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;}
+  .time-card{border-radius:var(--radius);padding:1.25rem;text-align:center;}
+  .time-card.morning{background:#FFF9E6;}
+  .time-card.afternoon{background:#E6F4FF;}
+  .time-card.evening{background:#EDE6FF;}
+  .time-card.night{background:#1a1a2e;color:#fff;}
+  .time-icon{font-size:2rem;margin-bottom:.5rem;}
+  .time-label{font-size:.7rem;font-weight:800;letter-spacing:.08em;margin-bottom:.3rem;font-family:'Noto Sans KR',sans-serif;}
+  .time-card.morning .time-label{color:#B8860B;}
+  .time-card.afternoon .time-label{color:#1565C0;}
+  .time-card.evening .time-label{color:#4527A0;}
+  .time-card.night .time-label{color:#B0BEC5;}
+  .time-en{font-size:1.05rem;font-weight:800;}
+  .time-card.morning .time-en{color:#7B5800;}
+  .time-card.afternoon .time-en{color:#0D47A1;}
+  .time-card.evening .time-en{color:#311B92;}
+  .time-card.night .time-en{color:#E1E1FF;}
+  .time-ko{font-size:.8rem;font-family:'Noto Sans KR',sans-serif;margin-top:2px;}
+  .time-card.morning .time-ko{color:#9E7A00;}
+  .time-card.afternoon .time-ko{color:#1565C0;}
+  .time-card.evening .time-ko{color:#4527A0;}
+  .time-card.night .time-ko{color:#90A4AE;}
+
+  /* ── PHONICS ── */
+  .ph-big{font-size:5rem;font-weight:900;color:var(--purple);text-align:center;line-height:1;margin-bottom:.25rem;}
+  .ph-sub{text-align:center;font-size:.9rem;color:var(--text-sub);margin-bottom:1.5rem;font-family:'Noto Sans KR',sans-serif;}
+  .ph-words{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-bottom:1.5rem;}
+  .ph-pill{background:var(--purple-light);border:1px solid var(--purple-mid);border-radius:20px;padding:.5rem 1.1rem;font-size:1.1rem;font-weight:800;color:var(--purple-dark);}
+  .ph-pill span{color:var(--coral);font-weight:900;}
+  .ph-note{background:var(--amber-light);border-left:3px solid var(--amber);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:.75rem 1rem;font-size:.85rem;color:var(--amber-dark);font-family:'Noto Sans KR',sans-serif;line-height:1.6;}
+  .ph-compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;}
+  .ph-col{text-align:center;padding:1rem;border-radius:var(--radius-sm);border:1px solid var(--border);}
+  .ph-col-title{font-size:.75rem;font-weight:800;letter-spacing:.08em;margin-bottom:.5rem;}
+  .ph-col.start .ph-col-title{color:var(--blue-dark);}
+  .ph-col.end .ph-col-title{color:var(--coral-dark);}
+  .ph-col-words{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
+  .ph-col-word{font-size:.9rem;font-weight:700;padding:3px 10px;border-radius:20px;}
+  .ph-col.start .ph-col-word{background:var(--blue-light);color:var(--blue-dark);}
+  .ph-col.end .ph-col-word{background:var(--coral-light);color:var(--coral-dark);}
+
+  /* ── QUIZ ── */
+  .quiz-progress{height:4px;background:var(--border);border-radius:2px;margin-bottom:1.5rem;overflow:hidden;}
+  .quiz-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--blue));border-radius:2px;transition:width .4s ease;}
+  .quiz-num{font-size:.8rem;color:var(--text-sub);margin-bottom:.5rem;font-family:'Noto Sans KR',sans-serif;}
+  .quiz-q{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:1.25rem;line-height:1.5;}
+  .quiz-opts{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;}
+  .qopt{padding:.85rem 1.1rem;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--card);font-family:'Nunito','Noto Sans KR',sans-serif;font-size:.95rem;font-weight:600;color:var(--text);cursor:pointer;text-align:left;transition:all .2s;}
+  .qopt:hover:not(:disabled){border-color:var(--purple);background:var(--purple-light);}
+  .qopt.correct{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);}
+  .qopt.wrong{background:var(--red-light);border-color:var(--red);color:var(--red-dark);}
+  .qopt:disabled{cursor:default;}
+  .quiz-fb{padding:.75rem 1rem;border-radius:var(--radius-sm);font-size:.9rem;font-family:'Noto Sans KR',sans-serif;margin-bottom:1rem;display:none;}
+  .quiz-fb.show{display:block;}
+  .fb-ok{background:var(--teal-light);color:var(--teal-dark);border-left:3px solid var(--teal);}
+  .fb-no{background:var(--red-light);color:var(--red-dark);border-left:3px solid var(--red);}
+  .quiz-nav{display:flex;justify-content:space-between;align-items:center;}
+  .quiz-score{font-size:.85rem;color:var(--text-sub);font-family:'Noto Sans KR',sans-serif;}
+  .btn-next{background:var(--purple);color:#fff;border:none;border-radius:var(--radius-sm);padding:.65rem 1.4rem;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;display:none;transition:background .2s;}
+  .btn-next:hover{background:var(--purple-dark);}
+  .btn-retry{background:var(--purple-light);color:var(--purple-dark);border:1.5px solid var(--purple-mid);border-radius:var(--radius-sm);padding:.65rem 1.4rem;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:1rem;}
+  .result-box{text-align:center;padding:2rem;}
+  .result-emoji{font-size:3.5rem;margin-bottom:.5rem;}
+  .result-score{font-size:2.5rem;font-weight:900;color:var(--purple);}
+  .result-msg{font-size:1rem;color:var(--text-sub);margin-top:.5rem;font-family:'Noto Sans KR',sans-serif;}
+
+  /* ── FOOTER ── */
+  footer{text-align:center;padding:2rem;font-size:.8rem;color:var(--text-sub);font-family:'Noto Sans KR',sans-serif;}
+
+  @media(max-width:500px){
+    .grid-2{grid-template-columns:1fr;}
+    .time-grid{grid-template-columns:1fr 1fr;}
+    .voca-grid{grid-template-columns:repeat(3,1fr);}
+    .ph-compare{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">4학년 영어 · Lesson 1</div>
+  <h1>My Name Is <em>Amy</em></h1>
+  <p>핵심 표현 · 단어 · 파닉스 · 퀴즈</p>
+</header>
+
+<div class="tab-wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('expr',this)">💬 핵심 표현</button>
+    <button class="tab" onclick="showTab('voca',this)">📚 단어 카드</button>
+    <button class="tab" onclick="showTab('time',this)">🕐 때 인사</button>
+    <button class="tab" onclick="showTab('phonics',this)">🔤 파닉스</button>
+    <button class="tab" onclick="showTab('quiz',this)">✏️ 퀴즈</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ══ 핵심 표현 ══ -->
+<div id="expr" class="panel active">
+
+  <p class="sec-label">이름 묻고 답하기</p>
+  <div class="grid-2">
+    <div class="card">
+      <span class="expr-tag tag-q">묻기</span>
+      <div class="expr-en">What's your name?</div>
+      <div class="expr-ko">이름이 뭐야?</div>
+      <div class="expr-arrow">↓ 대답</div>
+      <div class="expr-resp">
+        <div class="expr-en">My name is <span class="highlight">Amy</span>.</div>
+        <div class="expr-ko">내 이름은 에이미야.</div>
+      </div>
+    </div>
+    <div class="card">
+      <span class="expr-tag tag-self">자기소개</span>
+      <div class="expr-en">Hello, I'm <span class="highlight">Juno</span>.</div>
+      <div class="expr-ko">안녕, 나는 준오야.</div>
+      <div class="expr-arrow">↓ 반응</div>
+      <div class="expr-resp">
+        <div class="expr-en">Hi, <span class="highlight">Juno</span>. My name is Amy.</div>
+        <div class="expr-ko">안녕, 준오. 내 이름은 에이미야.</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="sec-label">소개에 답하기</p>
+  <div class="grid-2">
+    <div class="card">
+      <span class="expr-tag tag-intro">소개에 답하기</span>
+      <div class="expr-en">Nice to meet you.</div>
+      <div class="expr-ko">만나서 반가워.</div>
+      <div class="expr-arrow">↓ 대답</div>
+      <div class="expr-resp">
+        <div class="expr-en">Nice to meet you, <em>too</em>.</div>
+        <div class="expr-ko">나도 만나서 반가워.</div>
+      </div>
+    </div>
+    <div class="card">
+      <span class="expr-tag tag-q">주의</span>
+      <div class="expr-en" style="font-size:.95rem;">Nice to meet you, <span class="highlight">Amy</span>.</div>
+      <div class="expr-ko">에이미, 만나서 반가워. (이름을 함께 말해요)</div>
+      <div class="expr-arrow">↓</div>
+      <div class="expr-resp">
+        <div class="expr-en">Nice to meet you, too.</div>
+        <div class="expr-ko">나도 반가워.</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="sec-label">실제 대화 예시</p>
+  <div class="dialogue">
+    <div class="dialogue-title">Scene 1 — 등교 첫날</div>
+    <div class="line"><span class="speaker">준오</span><div class="speech">Hello, I'm Juno. What's your name? <small>안녕, 나는 준오야. 이름이 뭐야?</small></div></div>
+    <div class="line"><span class="speaker">에이미</span><div class="speech">Hi, Juno. My name is Amy. <small>안녕, 준오. 내 이름은 에이미야.</small></div></div>
+    <div class="line"><span class="speaker">준오</span><div class="speech">Nice to meet you, Amy. <small>에이미, 만나서 반가워.</small></div></div>
+    <div class="line"><span class="speaker">에이미</span><div class="speech">Nice to meet you, too. <small>나도 만나서 반가워.</small></div></div>
+  </div>
+  <div class="dialogue" style="background:var(--teal-light);">
+    <div class="dialogue-title" style="color:var(--teal-dark);">Scene 2 — 모모 등장</div>
+    <div class="line"><span class="speaker" style="color:var(--teal);">모모</span><div class="speech">Hello, Amy. My name is Momo. <small>안녕, 에이미. 내 이름은 모모야.</small></div></div>
+    <div class="line"><span class="speaker" style="color:var(--teal);">에이미</span><div class="speech">Wow, Momo! I like your bag. <small>와, 모모! 가방이 마음에 들어.</small></div></div>
+  </div>
+</div>
+
+<!-- ══ 단어 카드 ══ -->
+<div id="voca" class="panel">
+  <p class="sec-label">신출 어휘 12개 — 카드를 클릭하면 뜻이 강조돼요</p>
+  <div class="voca-grid" id="vcards"></div>
+  <div style="margin-top:1.25rem;background:var(--purple-light);border-radius:var(--radius-sm);padding:.9rem 1.1rem;font-size:.85rem;color:var(--purple-dark);font-family:'Noto Sans KR',sans-serif;">
+    💡 카드를 클릭해서 뜻을 확인해 보세요. 다시 클릭하면 원래대로 돌아와요.
+  </div>
+</div>
+
+<!-- ══ 때 인사 ══ -->
+<div id="time" class="panel">
+  <p class="sec-label">하루 중 때에 알맞은 인사말</p>
+  <div class="time-grid">
+    <div class="time-card morning">
+      <div class="time-icon">🌅</div>
+      <div class="time-label">아침</div>
+      <div class="time-en">Good morning.</div>
+      <div class="time-ko">좋은 아침이야.</div>
+    </div>
+    <div class="time-card afternoon">
+      <div class="time-icon">☀️</div>
+      <div class="time-label">점심·오후</div>
+      <div class="time-en">Good afternoon.</div>
+      <div class="time-ko">좋은 오후야.</div>
+    </div>
+    <div class="time-card evening">
+      <div class="time-icon">🌆</div>
+      <div class="time-label">저녁</div>
+      <div class="time-en">Good evening.</div>
+      <div class="time-ko">좋은 저녁이야.</div>
+    </div>
+    <div class="time-card night">
+      <div class="time-icon">🌙</div>
+      <div class="time-label">밤</div>
+      <div class="time-en">Good night.</div>
+      <div class="time-ko">잘 자.</div>
+    </div>
+  </div>
+
+  <p class="sec-label" style="margin-top:2rem;">읽기·쓰기 — 문장 패턴</p>
+  <div class="card">
+    <div style="font-size:1.1rem;font-weight:800;color:var(--purple-dark);margin-bottom:.5rem;">Good <span style="color:var(--coral);">morning / afternoon / evening / night</span>.</div>
+    <div style="font-size:.85rem;color:var(--text-sub);font-family:'Noto Sans KR',sans-serif;">앞에 <strong>Good</strong>을 붙이고, 뒤에 때를 나타내는 단어를 넣어요.<br>영어 문장의 첫 글자는 항상 대문자로 써요!</div>
+  </div>
+
+
+</div>
+
+<!-- ══ 파닉스 ══ -->
+<div id="phonics" class="panel">
+  <div class="card" style="text-align:center;">
+    <div class="ph-big">t</div>
+    <div class="ph-sub">단어 끝에서 /t/ 소리가 나요</div>
+    <div class="ph-words">
+      <div class="ph-pill">mee<span>t</span></div>
+      <div class="ph-pill">ha<span>t</span></div>
+      <div class="ph-pill">si<span>t</span></div>
+      <div class="ph-pill">ca<span>t</span></div>
+      <div class="ph-pill">nigh<span>t</span></div>
+      <div class="ph-pill">carrot → carro<span>t</span></div>
+    </div>
+    <div class="ph-note">
+      💡 끝소리 /t/는 첫소리 /t/보다 <strong>약하게</strong> 소리내요.<br>
+      /t/ 뒤에 모음을 추가해서 '트'처럼 발음하지 않도록 주의하세요!<br>
+      예: hat → ha<strong>t</strong> (O)&nbsp;&nbsp; ha<strong>트</strong> (X)
+    </div>
+  </div>
+
+  <p class="sec-label">첫소리 /t/ vs 끝소리 /t/</p>
+  <div class="ph-compare">
+    <div class="ph-col start">
+      <div class="ph-col-title">첫소리 /t/ — 강하게</div>
+      <div class="ph-col-words">
+        <span class="ph-col-word">ten</span>
+        <span class="ph-col-word">tape</span>
+        <span class="ph-col-word">touch</span>
+        <span class="ph-col-word">tomato</span>
+      </div>
+    </div>
+    <div class="ph-col end">
+      <div class="ph-col-title">끝소리 /t/ — 약하게</div>
+      <div class="ph-col-words">
+        <span class="ph-col-word">meet</span>
+        <span class="ph-col-word">hat</span>
+        <span class="ph-col-word">sit</span>
+        <span class="ph-col-word">night</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="sec-label" style="margin-top:1.5rem;">확인 문제</p>
+  <div class="card">
+    <div style="font-size:.9rem;font-weight:700;margin-bottom:.75rem;">끝소리가 /t/인 단어를 모두 찾아보세요!</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;" id="ph-check">
+      <button class="ph-pick" onclick="pickWord(this,'yes')">meet</button>
+      <button class="ph-pick" onclick="pickWord(this,'no')">hand</button>
+      <button class="ph-pick" onclick="pickWord(this,'yes')">hat</button>
+      <button class="ph-pick" onclick="pickWord(this,'no')">bag</button>
+      <button class="ph-pick" onclick="pickWord(this,'yes')">sit</button>
+      <button class="ph-pick" onclick="pickWord(this,'no')">name</button>
+      <button class="ph-pick" onclick="pickWord(this,'yes')">night</button>
+      <button class="ph-pick" onclick="pickWord(this,'no')">friend</button>
+    </div>
+    <div id="ph-result" style="margin-top:.75rem;font-size:.85rem;font-family:'Noto Sans KR',sans-serif;color:var(--text-sub);"></div>
+  </div>
+  <style>
+    .ph-pick{padding:.5rem 1rem;border-radius:20px;border:1.5px solid var(--border);background:var(--card);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;}
+    .ph-pick:hover{border-color:var(--purple);}
+    .ph-pick.picked-yes{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);}
+    .ph-pick.picked-no{background:var(--red-light);border-color:var(--red);color:var(--red-dark);}
+  </style>
+</div>
+
+<!-- ══ 퀴즈 ══ -->
+<div id="quiz" class="panel">
+  <div class="quiz-progress"><div class="quiz-bar" id="qbar" style="width:0%"></div></div>
+  <div id="quiz-area"></div>
+</div>
+
+</main>
+
+<footer>Lesson 1 · My Name Is Amy · 4학년 영어 복습 자료</footer>
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='quiz') initQuiz();
+}
+
+// ── VOCABULARY ──
+const words = [
+  {en:'morning',ko:'아침'},
+  {en:'afternoon',ko:'점심·오후'},
+  {en:'evening',ko:'저녁'},
+  {en:'night',ko:'밤'},
+  {en:'name',ko:'이름'},
+  {en:'meet',ko:'만나다'},
+  {en:'friend',ko:'친구'},
+  {en:'new',ko:'새로운'},
+  {en:'everyone',ko:'모두'},
+  {en:'bag',ko:'가방'},
+  {en:'to',ko:'~에게'},
+  {en:'we',ko:'우리'},
+];
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = 0.85;
+  utter.pitch = 1;
+  const voices = window.speechSynthesis.getVoices();
+  const enVoice = voices.find(v => v.lang.startsWith('en') && v.localService) || voices.find(v => v.lang.startsWith('en'));
+  if (enVoice) utter.voice = enVoice;
+  window.speechSynthesis.speak(utter);
+}
+window.speechSynthesis.onvoiceschanged = () => {};
+
+const vc = document.getElementById('vcards');
+words.forEach(w => {
+  const d = document.createElement('div');
+  d.className = 'vcard';
+  d.innerHTML = `
+    <div class="vcard-inner">
+      <div class="en">${w.en}</div>
+      <div class="ko">${w.ko}</div>
+      <div class="hint">탭 → 뜻 확인 · 🔊 → 발음 듣기</div>
+    </div>
+    <button class="speak-btn" title="발음 듣기" onclick="event.stopPropagation(); speakWord(this, '${w.en}')">🔊</button>`;
+  d.onclick = () => {
+    d.classList.toggle('flipped');
+    d.querySelector('.hint').style.display = d.classList.contains('flipped') ? 'none' : 'block';
+    speak(w.en);
+  };
+  vc.appendChild(d);
+});
+
+function speakWord(btn, word) {
+  speak(word);
+  btn.classList.add('speaking');
+  setTimeout(() => btn.classList.remove('speaking'), 600);
+}
+
+// ── PHONICS CHECK ──
+function pickWord(btn, correct) {
+  if(btn.classList.contains('picked-yes') || btn.classList.contains('picked-no')) return;
+  btn.classList.add(correct==='yes' ? 'picked-yes' : 'picked-no');
+  const total = document.querySelectorAll('.ph-pick[onclick*="yes"]').length;
+  const picked = document.querySelectorAll('.ph-pick.picked-yes').length;
+  const wrong = document.querySelectorAll('.ph-pick.picked-no').length;
+  if(picked+wrong > 0) {
+    document.getElementById('ph-result').textContent = `${picked}개 맞춤 · ${wrong}개 틀림 — /t/ 끝소리 단어: meet, hat, sit, night`;
+  }
+}
+
+// ── QUIZ ──
+const quizzes = [
+  {q:'아침에 친구를 만났을 때 하는 인사는?',opts:['Good night.','Good morning.','Good evening.','Good afternoon.'],ans:1,fb:'아침(morning)에는 "Good morning."이라고 인사해요!'},
+  {q:'처음 만난 사람에게 이름을 물을 때 쓰는 표현은?',opts:['Nice to meet you.','What\'s your name?','My name is Amy.','Good afternoon.'],ans:1,fb:'"What\'s your name?"은 "이름이 뭐야?"라는 뜻이에요.'},
+  {q:'"Nice to meet you."에 대한 알맞은 대답은?',opts:['Good night.','What\'s your name?','Nice to meet you, too.','My name is Juno.'],ans:2,fb:'"too"를 붙여서 "나도 만나서 반가워!"라고 대답해요.'},
+  {q:'저녁에 하는 인사로 알맞은 것은?',opts:['Good morning.','Good night.','Good evening.','Good afternoon.'],ans:2,fb:'저녁(evening)에는 "Good evening."이라고 인사해요.'},
+  {q:'"t"로 끝나는 단어가 아닌 것은?',opts:['meet','hat','name','sit'],ans:2,fb:'"name"은 e로 끝나요. meet, hat, sit은 모두 t로 끝나요!'},
+  {q:'밤에 잘 때 하는 인사는?',opts:['Good morning.','Good evening.','Good afternoon.','Good night.'],ans:3,fb:'잠자리에 들 때는 "Good night."이라고 해요.'},
+  {q:'다음 대화의 빈칸에 알맞은 말은?\nA: Hi, I\'m Sam.\nB: Hi, Sam. ___________',opts:['Nice to meet you.','What\'s your name?','Good morning.','My name is Sam.'],ans:0,fb:'처음 소개를 받았을 때 "Nice to meet you."라고 말해요.'},
+  {q:'"My name is Bora."는 어떤 상황에서 쓰나요?',opts:['헤어질 때','이름을 묻는 질문에 답할 때','친구를 칭찬할 때','시간을 물을 때'],ans:1,fb:'"What\'s your name?"이라는 질문에 "My name is ___."로 대답해요!'},
+];
+
+let cur=0, score=0, answered=false;
+
+function initQuiz(){
+  cur=0; score=0; answered=false;
+  renderQ();
+}
+
+function renderQ(){
+  const area = document.getElementById('quiz-area');
+  const bar = document.getElementById('qbar');
+  bar.style.width = (cur/quizzes.length*100)+'%';
+  if(cur >= quizzes.length){
+    const pct = Math.round(score/quizzes.length*100);
+    const emoji = pct>=80 ? '🎉' : pct>=50 ? '😊' : '💪';
+    const msg = pct>=80 ? '완벽해요! 정말 잘했어요!' : pct>=50 ? '잘했어요! 조금만 더 연습해봐요.' : '틀린 문제를 다시 복습해봐요!';
+    area.innerHTML = `<div class="result-box"><div class="result-emoji">${emoji}</div><div class="result-score">${score} / ${quizzes.length}</div><div class="result-msg">${msg}</div><button class="btn-retry" onclick="initQuiz()">다시 도전하기 🔄</button></div>`;
+    bar.style.width='100%';
+    return;
+  }
+  const q = quizzes[cur];
+  area.innerHTML = `
+    <div class="quiz-num">${cur+1} / ${quizzes.length} 문제</div>
+    <div class="quiz-q">${q.q.replace(/\n/g,'<br>')}</div>
+    <div class="quiz-opts">${q.opts.map((o,i)=>`<button class="qopt" onclick="pick(${i})">${o}</button>`).join('')}</div>
+    <div class="quiz-fb" id="qfb"></div>
+    <div class="quiz-nav">
+      <div class="quiz-score">현재 점수: ${score}점</div>
+      <button class="btn-next" id="qnext" onclick="nextQ()">다음 →</button>
+    </div>`;
+  answered=false;
+}
+
+function pick(i){
+  if(answered) return;
+  answered=true;
+  const q = quizzes[cur];
+  const opts = document.querySelectorAll('.qopt');
+  opts.forEach((o,j)=>{
+    o.disabled=true;
+    if(j===q.ans) o.classList.add('correct');
+    else if(j===i) o.classList.add('wrong');
+  });
+  const fb = document.getElementById('qfb');
+  if(i===q.ans){
+    score++;
+    fb.className='quiz-fb fb-ok show';
+    fb.textContent='✓ 정답! '+q.fb;
+  } else {
+    fb.className='quiz-fb fb-no show';
+    fb.textContent='✗ 틀렸어요. '+q.fb;
+  }
+  document.getElementById('qnext').style.display='inline-block';
+}
+
+function nextQ(){ cur++; renderQ(); }
+</script>
+</body>
+</html>
