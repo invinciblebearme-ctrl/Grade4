@@ -179,6 +179,14 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
   .sport-grid{grid-template-columns:repeat(2,1fr);}
   .fur-grid{grid-template-columns:repeat(2,1fr);}
 }
+
+/* 발음 버튼 향상 */
+.spk-btn{position:absolute;top:5px;right:7px;background:none;border:none;font-size:.9rem;cursor:pointer;opacity:.45;transition:all .2s;padding:2px;line-height:1;border-radius:50%;}
+.spk-btn:hover{opacity:1;background:rgba(0,0,0,.07);}
+.spk-btn.pop{transform:scale(1.5);opacity:1;}
+.tts-bar{display:flex;align-items:center;gap:.5rem;background:var(--bl-l,#E3F2FD);border-radius:var(--r-sm,8px);padding:.55rem .85rem;margin-bottom:.85rem;font-size:.8rem;color:var(--bl-d,#0D47A1);font-family:'Noto Sans KR',sans-serif;}
+.tts-dot{width:8px;height:8px;border-radius:50%;background:var(--gn,#2E7D32);animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
 </style>
 </head>
 <body>
@@ -211,7 +219,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 <div id="words" class="panel on">
   <div class="sec">
     <div class="sec-title">New Words — 신출 어휘 12개</div>
-    <div style="font-size:.8rem;color:var(--sub);margin-bottom:.9rem;font-family:'Noto Sans KR',sans-serif;">카드를 탭하면 뜻이 강조돼요 · 🔊 버튼으로 발음을 들어보세요</div>
+    <div class="tts-bar"><span class="tts-dot"></span>🔊 단어 카드를 탭하거나 🔊 버튼을 눌러 영어 발음을 들어보세요 (Chrome · Edge · Whale 지원)</div>
     <div class="vgrid" id="vcards"></div>
   </div>
   <div class="sec">
@@ -488,240 +496,269 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 <footer>Lesson 4 · Let's Play Basketball · 4학년 영어 포트폴리오 복습 자료</footer>
 
 <script>
-// ── TAB ──
+function adjustMainPadding(){
+  var n=document.querySelector('.nav-wrap'),m=document.querySelector('main');
+  if(n&&m) m.style.paddingTop=(n.offsetHeight+16)+'px';
+}
+window.addEventListener('load', adjustMainPadding);
+window.addEventListener('resize', adjustMainPadding);
+
+var _ttsV=[],_ttsR=false;
+function _ttsL(){
+  var vs=window.speechSynthesis?window.speechSynthesis.getVoices():[];
+  if(vs.length){_ttsV=vs;_ttsR=true;}
+}
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=function(){_ttsL();};
+  _ttsL();
+}
+function _ttsP(){
+  return _ttsV.find(function(v){return v.lang==='en-US'&&v.localService;})
+      || _ttsV.find(function(v){return v.lang==='en-US';})
+      || _ttsV.find(function(v){return v.lang==='en-GB';})
+      || _ttsV.find(function(v){return v.lang.startsWith('en');})
+      || null;
+}
+function speak(text,rate){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  function _d(){
+    var u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=rate||0.85; u.pitch=1;
+    var v=_ttsP(); if(v) u.voice=v;
+    u.onstart=function(){ window.speechSynthesis.resume(); };
+    window.speechSynthesis.speak(u);
+  }
+  if(!_ttsR){ _ttsL(); }
+  if(!_ttsR){ setTimeout(function(){ _ttsL(); _d(); }, 400); return; }
+  _d();
+}
+function popSpk(btn,word){
+  speak(word);
+  btn.classList.add('pop');
+  setTimeout(function(){ btn.classList.remove('pop'); }, 600);
+}
+
 function go(id,btn){
   window.scrollTo({top:0,behavior:'smooth'});
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('on'); });
+  document.querySelectorAll('.ntab').forEach(function(t){ t.classList.remove('on'); });
   document.getElementById(id).classList.add('on');
   btn.classList.add('on');
   if(id==='quiz') initQuiz();
   if(id==='scramble') initScramble();
-  if(id==='grammar') initGramQ();
+  if(id==='grammar' && typeof initGramQ !== 'undefined') initGramQ();
+  if(id==='words' && typeof initPosQuiz !== 'undefined') initPosQuiz();
 }
 
-// ── NAV 높이 동적 padding ──
-function adjustPadding(){
-  var nav=document.querySelector('.nav-wrap');
-  var main=document.querySelector('main');
-  if(nav&&main) main.style.paddingTop=(nav.offsetHeight+16)+'px';
+function reveal(el,ans){ el.textContent=ans; el.classList.add('revealed'); }
+function revealAll(){
+  document.querySelectorAll('.blank:not(.revealed)').forEach(function(b){
+    var oc=b.getAttribute('onclick');
+    var m=oc.match(/reveal\(this,'([^']+)'\)/)||oc.match(/reveal\(this,`([^`]+)`\)/);
+    if(m){ b.textContent=m[1]; b.classList.add('revealed'); }
+  });
 }
-window.addEventListener('load',adjustPadding);
-window.addEventListener('resize',adjustPadding);
-
-// ── TTS ──
-function speak(text){
-  if(!window.speechSynthesis)return;
-  window.speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(text);
-  u.lang='en-US';u.rate=0.85;
-  var vs=window.speechSynthesis.getVoices();
-  var v=vs.find(x=>x.lang.startsWith('en')&&x.localService)||vs.find(x=>x.lang.startsWith('en'));
-  if(v)u.voice=v;
-  window.speechSynthesis.speak(u);
+function resetBlanks(){
+  document.querySelectorAll('.blank').forEach(function(b){
+    var oc=b.getAttribute('onclick');
+    var m=oc.match(/reveal\(this,'([^']+)'\)/)||oc.match(/reveal\(this,`([^`]+)`\)/);
+    if(m){ b.textContent='_'.repeat(m[1].length); b.classList.remove('revealed'); }
+  });
 }
-window.speechSynthesis&&(window.speechSynthesis.onvoiceschanged=()=>{});
 
-// ── WORD CARDS ──
-const words=[
-  {n:1,en:'bad',ko:'안 좋은, 나쁜'},
-  {n:2,en:'badminton',ko:'배드민턴'},
-  {n:3,en:'baseball',ko:'야구'},
-  {n:4,en:'busy',ko:'바쁜'},
-  {n:5,en:"let's",ko:'~하자'},
-  {n:6,en:'pass',ko:'패스하다'},
-  {n:7,en:'play',ko:'놀다, 경기하다'},
-  {n:8,en:'sick',ko:'아픈'},
-  {n:9,en:'soccer',ko:'축구'},
-  {n:10,en:'sound',ko:'~처럼 들리다'},
-  {n:11,en:'tennis',ko:'테니스'},
-  {n:12,en:'basketball',ko:'농구'},
+function initScramble(){
+  var area=document.getElementById('scramble-area');
+  if(!area) return;
+  area.innerHTML='';
+  scrambles.forEach(function(s,i){
+    var sh=s.words.slice().sort(function(){ return Math.random()-.5; });
+    var div=document.createElement('div');
+    div.className='scramble-box';
+    var chips='';
+    sh.forEach(function(w){
+      chips+='<button class="word-chip" onclick="placeWord('+i+',this)">'+w+'</button>';
+    });
+    div.innerHTML=
+      '<div style="font-size:.8rem;color:var(--sub,#666);margin-bottom:.55rem">'+
+      '문제'+(i+1)+' &middot; '+s.hint+'</div>'+
+      '<div class="scramble-words" id="chips-'+i+'">'+chips+'</div>'+
+      '<div class="answer-area" id="ans-'+i+'"></div>'+
+      '<div class="scr-btns">'+
+      '<button class="btn-check" onclick="checkScr('+i+')">✓ 확인</button>'+
+      '<button class="btn-reset" onclick="resetScr('+i+')">↺ 다시</button>'+
+      '</div>'+
+      '<div id="fb-'+i+'" class="scr-fb" style="display:none"></div>';
+    area.appendChild(div);
+    var chipEls=div.querySelectorAll('.word-chip');
+    chipEls.forEach(function(el,j){ el.dataset.w=sh[j]; });
+  });
+}
+function placeWord(qi,btn){
+  if(btn.classList.contains('used')) return;
+  btn.classList.add('used');
+  var pc=document.createElement('button');
+  pc.className='placed-chip';
+  pc.textContent=btn.dataset.w;
+  pc.onclick=function(){ btn.classList.remove('used'); pc.remove(); document.getElementById('fb-'+qi).style.display='none'; };
+  document.getElementById('ans-'+qi).appendChild(pc);
+}
+function checkScr(qi){
+  var placed=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip')).map(function(c){ return c.textContent; }).join(' ');
+  var fb=document.getElementById('fb-'+qi); fb.style.display='block';
+  var norm=function(s){ return s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!'`]/g,''); };
+  if(norm(placed)===norm(scrambles[qi].answer)){
+    fb.className='scr-fb fb-ok'; fb.textContent='🎉 정답! "'+scrambles[qi].answer+'"';
+  } else {
+    fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" → 다시 조합해봐요!';
+  }
+}
+function resetScr(qi){
+  document.querySelectorAll('#chips-'+qi+' .word-chip').forEach(function(b){ b.classList.remove('used'); });
+  document.getElementById('ans-'+qi).innerHTML='';
+  document.getElementById('fb-'+qi).style.display='none';
+}
+
+var _qC=0,_qS=0,_qA=false;
+function initQuiz(){ _qC=0; _qS=0; _qA=false; renderQ(); }
+function renderQ(){
+  var a=document.getElementById('quiz-area'), b=document.getElementById('qbar');
+  if(!a||!b) return;
+  b.style.width=(_qC/quizzes.length*100)+'%';
+  if(_qC>=quizzes.length){
+    var p=Math.round(_qS/quizzes.length*100);
+    var e=p>=80?'🎉':p>=50?'😊':'💪';
+    var msg=p>=80?'완벽해요! 훌륭합니다!':p>=50?'잘했어요! 조금만 더 연습해요.':'틀린 표현을 다시 복습해봐요!';
+    a.innerHTML='<div class="result"><div class="res-emoji">'+e+'</div>'+
+      '<div class="res-score">'+_qS+' / '+quizzes.length+'</div>'+
+      '<div class="res-msg">'+msg+'</div>'+
+      '<button class="btn-retry" onclick="initQuiz()">다시 도전하기 🔄</button></div>';
+    b.style.width='100%'; return;
+  }
+  var q=quizzes[_qC];
+  var qtext=q.q.split('\n').join('<br>');
+  var opts=q.opts.map(function(o,i){ return '<button class="opt" onclick="pick('+i+')">'+o+'</button>'; }).join('');
+  a.innerHTML='<div class="quiz-num">'+(_qC+1)+' / '+quizzes.length+' 문제</div>'+
+    '<div class="quiz-q">'+qtext+'</div>'+
+    '<div class="opts">'+opts+'</div>'+
+    '<div class="qfb" id="qfb"></div>'+
+    '<div class="qnav"><div class="qscore">현재 점수 '+_qS+'점</div>'+
+    '<button class="btn-nxt" id="qnxt" onclick="nextQ()">다음 →</button></div>';
+  _qA=false;
+}
+function pick(i){
+  if(_qA) return; _qA=true;
+  var q=quizzes[_qC];
+  document.querySelectorAll('.opt').forEach(function(o,j){
+    o.disabled=true;
+    if(j===q.ans) o.classList.add('ok');
+    else if(j===i) o.classList.add('ng');
+  });
+  var fb=document.getElementById('qfb');
+  if(i===q.ans){ _qS++; fb.className='qfb fb-ok show'; fb.textContent='✓ 정답! '+q.fb; }
+  else { fb.className='qfb fb-ng show'; fb.textContent='✗ 틀렸어요. '+q.fb; }
+  document.getElementById('qnxt').style.display='inline-block';
+}
+function nextQ(){ _qC++; _qA=false; renderQ(); }
+
+function initGramQ(){ _gqI=0; _gqD=false; renderGQ(); }
+function renderGQ(){
+  var area=document.getElementById('gram-q-area');
+  if(!area) return;
+  if(_gqI>=gramQs.length){
+    area.innerHTML='<div class="card" style="text-align:center;padding:1.5rem">'+
+      '<div style="font-size:2rem;margin-bottom:.4rem">🎉</div>'+
+      '<div style="font-family:\'Baloo 2\',sans-serif;font-size:1.3rem;font-weight:800">모두 맞혔어요!</div>'+
+      '<button onclick="initGramQ()" style="margin-top:.8rem;padding:.5rem 1.2rem;cursor:pointer;border-radius:8px;border:1.5px solid #ccc">다시 풀기</button></div>';
+    return;
+  }
+  var q=gramQs[_gqI];
+  var btns=q.opts.map(function(o,i){
+    return '<button onclick="pickGQ('+i+')" style="flex:1;min-width:80px;padding:.6rem .5rem;border:1.5px solid #ccc;border-radius:8px;background:#fff;font-size:.9rem;font-weight:700;cursor:pointer">'+o+'</button>';
+  }).join('');
+  area.innerHTML='<div class="card">'+
+    '<div style="font-size:.78rem;color:#666;margin-bottom:.4rem">'+(_gqI+1)+' / '+gramQs.length+'</div>'+
+    '<div style="font-size:1.05rem;font-weight:700;margin-bottom:1rem">'+q.q+'</div>'+
+    '<div style="display:flex;gap:.5rem;flex-wrap:wrap">'+btns+'</div>'+
+    '<div id="gq-fb" style="display:none;margin-top:.7rem;padding:.6rem .85rem;border-radius:8px;font-size:.83rem"></div></div>';
+  _gqD=false;
+}
+function pickGQ(i){
+  if(_gqD) return; _gqD=true;
+  var q=gramQs[_gqI];
+  document.querySelectorAll('#gram-q-area .card button').forEach(function(b,j){
+    b.disabled=true;
+    if(j===q.ans) b.style.background='#E8F5E9';
+    else if(j===i) b.style.background='#FFEBEE';
+  });
+  var fb=document.getElementById('gq-fb'); fb.style.display='block';
+  if(i===q.ans){ fb.style.background='#E8F5E9'; fb.textContent='✓ 정답! '+q.fb; }
+  else { fb.style.background='#FFEBEE'; fb.textContent='✗ 틀렸어요. '+q.fb; }
+  setTimeout(function(){ _gqI++; renderGQ(); }, 1700);
+}
+
+var words=[
+  {n:1,en:'bad',ko:'안 좋은, 나쁜'},{n:2,en:'badminton',ko:'배드민턴'},
+  {n:3,en:'baseball',ko:'야구'},{n:4,en:'busy',ko:'바쁜'},
+  {n:5,en:"let's",ko:'~하자'},{n:6,en:'pass',ko:'패스하다'},
+  {n:7,en:'play',ko:'놀다, 경기하다'},{n:8,en:'sick',ko:'아픈'},
+  {n:9,en:'soccer',ko:'축구'},{n:10,en:'sound',ko:'~처럼 들리다'},
+  {n:11,en:'tennis',ko:'테니스'},{n:12,en:'basketball',ko:'농구'}
 ];
-const vc=document.getElementById('vcards');
-words.forEach(w=>{
-  const d=document.createElement('div');
-  d.className='vcard';
-  d.innerHTML=`<button class="spk-btn" onclick="event.stopPropagation();popSpk(this,'${w.en}')">🔊</button><span class="num">${w.n}</span><div class="ven">${w.en}</div><div class="vko">${w.ko}</div><div class="vhint">탭 → 뜻 확인</div>`;
-  d.onclick=()=>{
-    d.classList.toggle('flipped');
-    d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block';
-    speak(w.en);
-  };
+var vc=document.getElementById('vcards');
+if(vc){ words.forEach(function(w){
+  var d=document.createElement('div'); d.className='vcard';
+  d.innerHTML='<button class="spk-btn" onclick="event.stopPropagation();popSpk(this,\''+w.en+'\')">🔊</button>'
+    +'<span class="num">'+w.n+'</span><div class="ven">'+w.en+'</div>'
+    +'<div class="vko">'+w.ko+'</div><div class="vhint">탭 → 뜻 확인</div>';
+  d.onclick=function(){ d.classList.toggle('flipped'); d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block'; speak(w.en); };
   vc.appendChild(d);
-});
-function popSpk(btn,word){speak(word);btn.classList.add('pop');setTimeout(()=>btn.classList.remove('pop'),500);}
+}); }
 
-// ── SPORT CARDS ──
-const sports=[
+var sportDat=[
   {ico:'⚽',en:'soccer',ko:'축구'},
   {ico:'🎾',en:'tennis',ko:'테니스'},
   {ico:'⚾',en:'baseball',ko:'야구'},
   {ico:'🏸',en:'badminton',ko:'배드민턴'},
-  {ico:'🏀',en:'basketball',ko:'농구'},
+  {ico:'🏀',en:'basketball',ko:'농구'}
 ];
-const sc=document.getElementById('sportcards');
-sports.forEach(s=>{
-  const el=document.createElement('div');
-  el.className='sport-card';
-  el.innerHTML=`<div class="sport-ico">${s.ico}</div><div class="sport-en">${s.en}</div><div class="sport-lets">Let's play ${s.en}.</div><div class="sport-ko">${s.ko} 하자!</div>`;
-  el.onclick=()=>speak(`Let's play ${s.en}.`);
+var sc=document.getElementById('sportcards');
+if(sc){ sportDat.forEach(function(s){
+  var el=document.createElement('div'); el.className='sport-card';
+  el.innerHTML='<div class="sport-ico">'+s.ico+'</div><div class="sport-en">'+s.en+'</div>'
+    +'<div class="sport-lets">Let\'s play '+s.en+'.</div><div class="sport-ko">'+s.ko+' 하자!</div>';
+  el.onclick=function(){ speak("Let's play "+s.en+"."); };
   sc.appendChild(el);
-});
+}); }
 
-// ── STORY FILL ──
-function reveal(el,ans){el.textContent=ans;el.classList.add('revealed');}
-function revealAll(){
-  document.querySelectorAll('.blank:not(.revealed)').forEach(b=>{
-    const a=b.getAttribute('onclick').match(/'([^']+)'/)[1];
-    b.textContent=a;b.classList.add('revealed');
-  });
-}
-function resetBlanks(){
-  document.querySelectorAll('.blank').forEach(b=>{
-    const a=b.getAttribute('onclick').match(/'([^']+)'/)[1];
-    b.textContent='_'.repeat(a.length);b.classList.remove('revealed');
-  });
-}
-
-// ── GRAMMAR QUIZ ──
-const gramQs=[
-  {q:"Let's ___ soccer. (play)",opts:["Let's playing soccer.","Let's played soccer.","Let's plays soccer.","Let's play soccer."],ans:3,fb:"Let's 뒤에 동사 원형 'play'를 써요!"},
-  {q:"'함께 공부하자!'를 영어로?",opts:["Let's studying!","Let's studied!","Let's study!","Let's to study!"],ans:2,fb:"Let's study! ✅ 원형 study를 써야 해요!"},
-  {q:"'Sorry, I can't.'에 어울리는 이유는?",opts:["Sounds good.","I'm busy.","Let's play!","That's good."],ans:1,fb:"거절할 때 이유를 말해요: Sorry, I can't. I'm busy."},
-  {q:"'Sounds good!'의 뜻은?",opts:["안됐구나.","미안해.","좋아!","나는 아파."],ans:2,fb:"'Sounds good!'은 제안을 받아들일 때 쓰는 '좋아!'예요!"},
+var scrambles=[
+  {words:["Let's",'play','basketball','.'],answer:"Let's play basketball.",hint:'농구 하자.'},
+  {words:['Sorry,','I',"can't",'.'],answer:"Sorry, I can't.",hint:'미안, 안 되겠어.'},
+  {words:['Sounds','good','!'],answer:'Sounds good!',hint:'좋아!'},
+  {words:["That's",'too','bad','.'],answer:"That's too bad.",hint:'안됐구나.'},
+  {words:['Do','you','like','soccer','?'],answer:'Do you like soccer?',hint:'너 축구 좋아해?'},
+  {words:['Yes,','I','do','.'],answer:'Yes, I do.',hint:'응, 좋아해.'}
 ];
-let gqIdx=0,gqDone=false;
-function initGramQ(){gqIdx=0;gqDone=false;renderGQ();}
-function renderGQ(){
-  const area=document.getElementById('gram-q-area');
-  if(gqIdx>=gramQs.length){
-    area.innerHTML=`<div class="card" style="text-align:center;padding:1.5rem;"><div style="font-size:2rem;margin-bottom:.4rem;">🎉</div><div style="font-family:'Baloo 2',sans-serif;font-size:1.3rem;font-weight:800;color:var(--or);">모두 맞혔어요!</div><div style="font-size:.85rem;color:var(--sub);margin:.4rem 0 1rem;font-family:'Noto Sans KR',sans-serif;">Let's 권유 표현 완벽 이해!</div><button onclick="initGramQ()" style="background:var(--or-l);color:var(--or-d);border:1.5px solid var(--or);border-radius:var(--r-sm);padding:.5rem 1.2rem;font-family:'Baloo 2',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;">다시 풀기</button></div>`;
-    return;
-  }
-  const q=gramQs[gqIdx];
-  area.innerHTML=`<div class="card"><div style="font-size:.78rem;color:var(--sub);margin-bottom:.4rem;">${gqIdx+1} / ${gramQs.length}</div><div style="font-family:'Baloo 2',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:1rem;color:var(--text);">${q.q}</div><div style="display:flex;flex-direction:column;gap:.5rem;">${q.opts.map((o,i)=>`<button onclick="pickGQ(${i})" style="padding:.7rem 1rem;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--white);font-family:'Baloo 2',sans-serif;font-size:.9rem;font-weight:600;color:var(--text);cursor:pointer;text-align:left;transition:all .18s;">${o}</button>`).join('')}</div><div id="gq-fb" style="display:none;margin-top:.7rem;padding:.6rem .85rem;border-radius:var(--r-sm);font-size:.83rem;font-family:'Noto Sans KR',sans-serif;"></div></div>`;
-  gqDone=false;
-}
-function pickGQ(i){
-  if(gqDone)return;gqDone=true;
-  const q=gramQs[gqIdx];
-  const btns=document.querySelectorAll('#gram-q-area .card button:not([onclick="initGramQ()"])');
-  btns.forEach((b,j)=>{
-    b.disabled=true;
-    if(j===q.ans)b.style.cssText+=';background:var(--gn-l);border-color:var(--gn);color:var(--gn-d);';
-    else if(j===i)b.style.cssText+=';background:var(--rd-l);border-color:var(--rd);color:var(--rd-d);';
-  });
-  const fb=document.getElementById('gq-fb');
-  fb.style.display='block';
-  if(i===q.ans){
-    fb.style.cssText='display:block;margin-top:.7rem;padding:.6rem .85rem;border-radius:var(--r-sm);font-size:.83rem;font-family:"Noto Sans KR",sans-serif;background:var(--gn-l);border-left:3px solid var(--gn);color:var(--gn-d);';
-    fb.textContent='✓ 정답! '+q.fb;
-  }else{
-    fb.style.cssText='display:block;margin-top:.7rem;padding:.6rem .85rem;border-radius:var(--r-sm);font-size:.83rem;font-family:"Noto Sans KR",sans-serif;background:var(--rd-l);border-left:3px solid var(--rd);color:var(--rd-d);';
-    fb.textContent='✗ 틀렸어요. '+q.fb;
-  }
-  setTimeout(()=>{gqIdx++;renderGQ();},1700);
-}
-
-// ── SCRAMBLE ──
-const scrambles=[
-  {words:["Let's","play","basketball","."],answer:"Let's play basketball.",hint:'농구 하자.'},
-  {words:["Sorry,","I","can't","."],answer:"Sorry, I can't.",hint:'미안, 안 되겠어.'},
-  {words:["Sounds","good","!"],answer:"Sounds good!",hint:'좋아!'},
-  {words:["That's","too","bad","."],answer:"That's too bad.",hint:'안됐구나.'},
-  {words:["Do","you","like","soccer","?"],answer:"Do you like soccer?",hint:'너 축구 좋아해?'},
-  {words:["Yes,","I","do","."],answer:"Yes, I do.",hint:'응, 좋아해.'},
+var gramQs=[
+  {q:"Let's ___ soccer.",opts:["Let's playing soccer.","Let's played soccer.","Let's plays soccer.","Let's play soccer."],ans:3,fb:"Let's 뒤에 동사 원형 'play'를 써요!"},
+  {q:"함께 공부하자를 영어로?",opts:["Let's studying!","Let's studied!","Let's study!","Let's to study!"],ans:2,fb:"Let's study! 원형 study를 써야 해요!"},
+  {q:"Sorry, I can't에 어울리는 이유는?",opts:['Sounds good.',"I'm busy.","Let's play!","That's good."],ans:1,fb:"거절할 때 이유를 말해요: Sorry, I can't. I'm busy."},
+  {q:"Sounds good의 뜻은?",opts:['안됐구나.','미안해.','좋아!','나는 아파.'],ans:2,fb:"Sounds good은 제안을 받아들일 때 쓰는 좋아예요!"}
 ];
-function initScramble(){
-  const area=document.getElementById('scramble-area');
-  area.innerHTML='';
-  scrambles.forEach((s,i)=>{
-    const sh=[...s.words].sort(()=>Math.random()-.5);
-    const div=document.createElement('div');
-    div.className='scramble-box';
-    div.innerHTML=`
-      <div style="font-size:.8rem;color:var(--sub);margin-bottom:.55rem;font-family:'Noto Sans KR',sans-serif;">문제 ${i+1} · ${s.hint}</div>
-      <div class="scramble-words" id="chips-${i}">${sh.map(w=>`<button class="word-chip" data-w="${w}" onclick="placeWord(${i},this)">${w}</button>`).join('')}</div>
-      <div class="answer-area" id="ans-${i}"></div>
-      <div class="scr-btns">
-        <button class="btn-check" onclick="checkScr(${i},'${s.answer.replace(/'/g,"\\'")}')">✓ 확인</button>
-        <button class="btn-reset" onclick="resetScr(${i})">↺ 다시</button>
-      </div>
-      <div id="fb-${i}" class="scr-fb" style="display:none;"></div>`;
-    area.appendChild(div);
-  });
-}
-function placeWord(qi,btn){
-  if(btn.classList.contains('used'))return;
-  btn.classList.add('used');
-  const pc=document.createElement('button');
-  pc.className='placed-chip';pc.textContent=btn.dataset.w;
-  pc.onclick=()=>{btn.classList.remove('used');pc.remove();document.getElementById(`fb-${qi}`).style.display='none';};
-  document.getElementById(`ans-${qi}`).appendChild(pc);
-}
-function checkScr(qi,ans){
-  const placed=[...document.querySelectorAll(`#ans-${qi} .placed-chip`)].map(c=>c.textContent).join(' ');
-  const fb=document.getElementById(`fb-${qi}`);
-  fb.style.display='block';
-  const norm=s=>s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!]/g,'');
-  if(norm(placed)===norm(ans)){fb.className='scr-fb fb-ok';fb.textContent=`🎉 정답! "${ans}"`;}
-  else{fb.className='scr-fb fb-ng';fb.textContent=`"${placed}" → 다시 조합해봐요!`;}
-}
-function resetScr(qi){
-  document.querySelectorAll(`#chips-${qi} .word-chip`).forEach(b=>b.classList.remove('used'));
-  document.getElementById(`ans-${qi}`).innerHTML='';
-  document.getElementById(`fb-${qi}`).style.display='none';
-}
-
-// ── QUIZ ──
-const quizzes=[
-  {q:'"야구 하자."를 영어로 하면?',opts:["Let's playing baseball.","Let's play baseball.","Let's played baseball.","Let's to play baseball."],ans:1,fb:"Let's + 동사원형(play)! Let's play baseball. ✅"},
+var _gqI=0,_gqD=false;
+var quizzes=[
+  {q:'"야구 하자."를 영어로?',opts:["Let's playing baseball.","Let's play baseball.","Let's played baseball.","Let's to play baseball."],ans:1,fb:"Let's + 동사원형(play)! Let's play baseball."},
   {q:'제안에 찬성할 때 하는 말은?',opts:["Sorry, I can't.","That's too bad.","Sounds good!","I'm busy."],ans:2,fb:'"Sounds good!"은 제안을 받아들일 때 쓰는 "좋아!"예요.'},
-  {q:'"Sorry, I can\'t."의 뜻은?',opts:["좋아, 하자!","안됐구나.","미안하지만, 안 되겠어.","나는 아파."],ans:2,fb:'"Sorry, I can\'t."는 거절할 때 쓰는 "미안하지만, 안 되겠어."예요.'},
-  {q:'Fun Talk 1에서 Kate가 배드민턴을 못 하는 이유는?',opts:["I\'m sick.","I\'m busy.","I\'m tired.","I don\'t like badminton."],ans:2,fb:"Kate: Sorry, I can't. I'm tired. 피곤해서 못 한다고 했어요."},
-  {q:"다음 중 올바른 Let's 문장은?",opts:["Let's studying!","Let's to study!","Let's study!","Let's studied!"],ans:2,fb:"Let's 뒤에는 동사 원형! Let's study! ✅"},
-  {q:'"That\'s too bad."의 뜻은?',opts:["좋아!","잘됐다.","안됐구나.","조심해."],ans:2,fb:'"That\'s too bad."는 상대방의 상황에 안타까움을 나타내는 "안됐구나."예요.'},
-  {q:'Listen to the Story #1에서 토미가 제안한 운동은?',opts:["soccer","tennis","baseball","basketball"],ans:3,fb:"토미: Let's play basketball. 농구를 하자고 했어요!"},
+  {q:'"Sorry, I can\'t."의 뜻은?',opts:['좋아, 하자!','안됐구나.','미안하지만, 안 되겠어.','나는 아파.'],ans:2,fb:'"Sorry, I can\'t."는 거절할 때 쓰는 "미안하지만, 안 되겠어."예요.'},
+  {q:'Fun Talk 1에서 Kate가 배드민턴을 못 하는 이유는?',opts:["I'm sick.","I'm busy.","I'm tired.","I don't like badminton."],ans:2,fb:"Kate: Sorry, I can't. I'm tired. 피곤해서 못 한다고 했어요."},
+  {q:"다음 중 올바른 Let's 문장은?",opts:["Let's studying!","Let's to study!","Let's study!","Let's studied!"],ans:2,fb:"Let's 뒤에는 동사 원형! Let's study!"},
+  {q:'"That\'s too bad."의 뜻은?',opts:['좋아!','잘됐다.','안됐구나.','조심해.'],ans:2,fb:'"That\'s too bad."는 상대방의 상황에 안타까움을 나타내는 "안됐구나."예요.'},
+  {q:'스토리 #1에서 토미가 제안한 운동은?',opts:['soccer','tennis','baseball','basketball'],ans:3,fb:'토미: Let\'s play basketball. 농구를 하자고 했어요!'},
   {q:'"Do you like soccer?"에 대한 긍정 대답은?',opts:["No, I don't.","Sorry, I can't.","Yes, I do.","That's too bad."],ans:2,fb:'"Yes, I do."로 좋아한다고 대답해요!'},
   {q:'Fun Talk 2에서 보라가 야구를 못 하는 이유는?',opts:["I'm tired.","I'm busy.","I'm thirsty.","I'm sick."],ans:3,fb:"보라: Sorry, I can't. I'm sick. 아파서 못 한다고 했어요."},
-  {q:"'Let's'는 무엇의 줄임말인가요?",opts:["Let us","Let is","Let has","Lets"],ans:0,fb:"Let's = Let us (우리 ~하자)의 줄임말이에요!"},
+  {q:"'Let's'는 무엇의 줄임말인가요?",opts:['Let us','Let is','Let has','Lets'],ans:0,fb:"Let's = Let us (우리 ~하자)의 줄임말이에요!"}
 ];
-let cur=0,score=0,answered=false;
-function initQuiz(){cur=0;score=0;answered=false;renderQ();}
-function renderQ(){
-  const area=document.getElementById('quiz-area');
-  const bar=document.getElementById('qbar');
-  bar.style.width=(cur/quizzes.length*100)+'%';
-  if(cur>=quizzes.length){
-    const pct=Math.round(score/quizzes.length*100);
-    const e=pct>=80?'🎉':pct>=50?'😊':'💪';
-    const m=pct>=80?'완벽해요! 훌륭합니다!':pct>=50?'잘했어요! 조금만 더 연습해요.':'틀린 표현을 다시 복습해봐요!';
-    area.innerHTML=`<div class="result"><div class="res-emoji">${e}</div><div class="res-score">${score} / ${quizzes.length}</div><div class="res-msg">${m}</div><button class="btn-retry" onclick="initQuiz()">다시 도전하기 🔄</button></div>`;
-    bar.style.width='100%';return;
-  }
-  const q=quizzes[cur];
-  area.innerHTML=`
-    <div class="quiz-num">${cur+1} / ${quizzes.length} 문제</div>
-    <div class="quiz-q">${q.q.replace(/\n/g,'<br>')}</div>
-    <div class="opts">${q.opts.map((o,i)=>`<button class="opt" onclick="pick(${i})">${o}</button>`).join('')}</div>
-    <div class="qfb" id="qfb"></div>
-    <div class="qnav"><div class="qscore">현재 점수 ${score}점</div><button class="btn-nxt" id="qnxt" onclick="nextQ()">다음 →</button></div>`;
-  answered=false;
-}
-function pick(i){
-  if(answered)return;answered=true;
-  const q=quizzes[cur];
-  document.querySelectorAll('.opt').forEach((o,j)=>{
-    o.disabled=true;
-    if(j===q.ans)o.classList.add('ok');
-    else if(j===i)o.classList.add('ng');
-  });
-  const fb=document.getElementById('qfb');
-  if(i===q.ans){score++;fb.className='qfb fb-ok show';fb.textContent='✓ 정답! '+q.fb;}
-  else{fb.className='qfb fb-ng show';fb.textContent='✗ 틀렸어요. '+q.fb;}
-  document.getElementById('qnxt').style.display='inline-block';
-}
-function nextQ(){cur++;answered=false;renderQ();}
+
 </script>
 </body>
 </html>
