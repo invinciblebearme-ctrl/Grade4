@@ -195,6 +195,14 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
   .grid4{grid-template-columns:1fr 1fr;}
   .vgrid{grid-template-columns:repeat(3,1fr);}
 }
+
+/* 발음 버튼 향상 */
+.spk-btn{position:absolute;top:5px;right:7px;background:none;border:none;font-size:.9rem;cursor:pointer;opacity:.45;transition:all .2s;padding:2px;line-height:1;border-radius:50%;}
+.spk-btn:hover{opacity:1;background:rgba(0,0,0,.07);}
+.spk-btn.pop{transform:scale(1.5);opacity:1;}
+.tts-bar{display:flex;align-items:center;gap:.5rem;background:var(--bl-l,#E3F2FD);border-radius:var(--r-sm,8px);padding:.55rem .85rem;margin-bottom:.85rem;font-size:.8rem;color:var(--bl-d,#0D47A1);font-family:'Noto Sans KR',sans-serif;}
+.tts-dot{width:8px;height:8px;border-radius:50%;background:var(--gn,#2E7D32);animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
 </style>
 </head>
 <body>
@@ -228,7 +236,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 <div id="words" class="panel on">
   <div class="sec">
     <div class="sec-title">New Words — 신출 어휘 12개</div>
-    <div style="font-size:.8rem;color:var(--sub);margin-bottom:.9rem;font-family:'Noto Sans KR',sans-serif;">카드를 탭하면 뜻이 강조돼요 · 🔊 버튼으로 발음을 들어보세요</div>
+    <div class="tts-bar"><span class="tts-dot"></span>🔊 단어 카드를 탭하거나 🔊 버튼을 눌러 영어 발음을 들어보세요 (Chrome · Edge · Whale 지원)</div>
     <div class="vgrid" id="vcards"></div>
   </div>
 </div>
@@ -532,204 +540,193 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 <footer>Lesson 1 · My Name Is Amy · 4학년 영어 포트폴리오 복습 자료</footer>
 
 <script>
-// ── TAB ──
-function go(id, btn){
+function adjustMainPadding(){
+  var n=document.querySelector('.nav-wrap'),m=document.querySelector('main');
+  if(n&&m) m.style.paddingTop=(n.offsetHeight+16)+'px';
+}
+window.addEventListener('load', adjustMainPadding);
+window.addEventListener('resize', adjustMainPadding);
+
+var _ttsV=[],_ttsR=false;
+function _ttsL(){
+  if(!window.speechSynthesis) return;
+  var vs=window.speechSynthesis.getVoices();
+  if(vs.length){_ttsV=vs;_ttsR=true;}
+}
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=function(){_ttsL();};
+  _ttsL();
+}
+function _ttsP(){
+  return _ttsV.find(function(v){return v.lang==='en-US'&&v.localService;})
+      || _ttsV.find(function(v){return v.lang==='en-US';})
+      || _ttsV.find(function(v){return v.lang==='en-GB';})
+      || _ttsV.find(function(v){return v.lang.startsWith('en');})
+      || null;
+}
+function speak(text,rate){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  function _d(){
+    var u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=rate||0.85; u.pitch=1;
+    var v=_ttsP(); if(v) u.voice=v;
+    u.onstart=function(){window.speechSynthesis.resume();};
+    window.speechSynthesis.speak(u);
+  }
+  if(!_ttsR){ _ttsL(); }
+  if(!_ttsR){ setTimeout(function(){_ttsL();_d();},400); return; }
+  _d();
+}
+function popSpk(btn,word){
+  speak(word);
+  btn.classList.add('pop');
+  setTimeout(function(){btn.classList.remove('pop');},600);
+}
+
+
+function go(id,btn){
   window.scrollTo({top:0,behavior:'smooth'});
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.ntab').forEach(function(t){t.classList.remove('on');});
   document.getElementById(id).classList.add('on');
   btn.classList.add('on');
   if(id==='quiz') initQuiz();
   if(id==='scramble') initScramble();
 }
-
-// ── TTS ──
-function speak(text){
-  if(!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang='en-US'; u.rate=0.85; u.pitch=1;
-  const vs = window.speechSynthesis.getVoices();
-  const v = vs.find(v=>v.lang.startsWith('en')&&v.localService)||vs.find(v=>v.lang.startsWith('en'));
-  if(v) u.voice=v;
-  window.speechSynthesis.speak(u);
-}
-window.speechSynthesis && (window.speechSynthesis.onvoiceschanged=()=>{});
-
-// ── VOCABULARY ──
 const words=[
-  {n:1,en:'afternoon',ko:'오후'},
-  {n:2,en:'bag',ko:'가방'},
-  {n:3,en:'evening',ko:'저녁'},
-  {n:4,en:'everyone',ko:'모두'},
-  {n:5,en:'friend',ko:'친구'},
-  {n:6,en:'meet',ko:'만나다'},
-  {n:7,en:'morning',ko:'아침'},
-  {n:8,en:'name',ko:'이름'},
-  {n:9,en:'new',ko:'새로운'},
-  {n:10,en:'night',ko:'밤'},
-  {n:11,en:'to',ko:'~에게'},
-  {n:12,en:'we',ko:'우리'},
+  {n:1,en:'afternoon',ko:'오후'},{n:2,en:'bag',ko:'가방'},
+  {n:3,en:'evening',ko:'저녁'},{n:4,en:'everyone',ko:'모두'},
+  {n:5,en:'friend',ko:'친구'},{n:6,en:'meet',ko:'만나다'},
+  {n:7,en:'morning',ko:'아침'},{n:8,en:'name',ko:'이름'},
+  {n:9,en:'new',ko:'새로운'},{n:10,en:'night',ko:'밤'},
+  {n:11,en:'to',ko:'~에게'},{n:12,en:'we',ko:'우리'},
 ];
-const vc=document.getElementById('vcards');
-words.forEach(w=>{
-  const d=document.createElement('div');
-  d.className='vcard';
-  d.innerHTML=`<button class="spk-btn" title="발음 듣기" onclick="event.stopPropagation();popSpk(this,'${w.en}')">🔊</button><span class="num">⑪`.replace('⑪',`${w.n}`)+`</span><div class="ven">${w.en}</div><div class="vko">${w.ko}</div><div class="vhint">탭 → 뜻 확인</div>`;
-  d.onclick=()=>{
-    d.classList.toggle('flipped');
-    d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block';
-    speak(w.en);
-  };
-  vc.appendChild(d);
-});
-function popSpk(btn,word){
-  speak(word);
-  btn.classList.add('pop');
-  setTimeout(()=>btn.classList.remove('pop'),500);
+var vc=document.getElementById('vcards');
+if(vc){
+  words.forEach(function(w){
+    var d=document.createElement('div');
+    d.className='vcard';
+    d.innerHTML='<button class="spk-btn" onclick="event.stopPropagation();popSpk(this,\''+w.en+'\')">🔊</button>'
+      +'<span class="num">'+w.n+'</span><div class="ven">'+w.en+'</div>'
+      +'<div class="vko">'+w.ko+'</div><div class="vhint">탭 → 뜻 확인</div>';
+    d.onclick=function(){
+      d.classList.toggle('flipped');
+      d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block';
+      speak(w.en);
+    };
+    vc.appendChild(d);
+  });
 }
-
-// ── PHONICS PICKS ──
-const phWords=[
+var phWords=[
   {w:'meet',t:true},{w:'hand',t:false},{w:'hat',t:true},
   {w:'bag',t:false},{w:'sit',t:true},{w:'name',t:false},
-  {w:'night',t:true},{w:'friend',t:false},{w:'cat',t:true},
+  {w:'night',t:true},{w:'friend',t:false}
 ];
-const pp=document.getElementById('ph-picks');
+var pp=document.getElementById('ph-picks');
 if(pp){
-  phWords.forEach(pw=>{
-    const b=document.createElement('button');
+  phWords.forEach(function(pw){
+    var b=document.createElement('button');
     b.className='ph-pick'; b.textContent=pw.w;
-    b.onclick=()=>{
-      if(b.classList.contains('ok')||b.classList.contains('ng'))return;
+    b.onclick=function(){
+      if(b.classList.contains('ok')||b.classList.contains('ng')) return;
       b.classList.add(pw.t?'ok':'ng');
-      const total=phWords.filter(x=>x.t).length;
-      const got=document.querySelectorAll('.ph-pick.ok').length;
-      const bad=document.querySelectorAll('.ph-pick.ng').length;
-      document.getElementById('ph-res').textContent=`✓ ${got}개 맞춤 · ✗ ${bad}개 틀림 (정답: meet, hat, sit, night, cat)`;
+      var got=document.querySelectorAll('.ph-pick.ok').length;
+      var bad=document.querySelectorAll('.ph-pick.ng').length;
+      document.getElementById('ph-res').textContent='✓ '+got+'개 맞춤 · ✗ '+bad+'개 틀림 (정답: meet, hat, sit, night)';
     };
     pp.appendChild(b);
   });
 }
-
-// ── ALPHA QUIZ ──
-const aq=document.getElementById('alpha-quiz');
-if(aq){
-  aq.innerHTML=`
-    <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem;" id="alpha-chips"></div>
-    <div class="answer-area" id="alpha-answer" style="min-height:44px;"></div>
-    <div style="display:flex;gap:.5rem;margin-top:.4rem;">
-      <button class="btn-check" onclick="checkAlpha()">확인</button>
-      <button class="btn-reset" onclick="resetAlpha()">다시</button>
-    </div>
-    <div id="alpha-fb" class="scr-fb" style="display:none;"></div>`;
-  const letters=['n','m','g','o','r','i','n'];
-  const ac=document.getElementById('alpha-chips');
-  letters.forEach((l,i)=>{
-    const b=document.createElement('button');
+var aqEl=document.getElementById('alpha-quiz');
+if(aqEl){
+  aqEl.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem;" id="alpha-chips"></div>'
+    +'<div class="answer-area" id="alpha-answer"></div>'
+    +'<div style="display:flex;gap:.5rem;margin-top:.4rem;">'
+    +'<button class="btn-check" onclick="checkAlpha()">확인</button>'
+    +'<button class="btn-reset" onclick="resetAlpha()">다시</button></div>'
+    +'<div id="alpha-fb" class="scr-fb" style="display:none;"></div>';
+  ['n','m','g','o','r','i','n'].forEach(function(l,i){
+    var b=document.createElement('button');
     b.className='word-chip'; b.textContent=l; b.dataset.idx=i;
-    b.onclick=()=>{
-      if(b.classList.contains('used'))return;
+    b.onclick=function(){
+      if(b.classList.contains('used')) return;
       b.classList.add('used');
-      const pc=document.createElement('button');
+      var pc=document.createElement('button');
       pc.className='placed-chip'; pc.textContent=l; pc.dataset.src=i;
-      pc.onclick=()=>{
-        b.classList.remove('used');
-        pc.remove();
-        document.getElementById('alpha-fb').style.display='none';
-      };
+      pc.onclick=function(){ b.classList.remove('used'); pc.remove(); document.getElementById('alpha-fb').style.display='none'; };
       document.getElementById('alpha-answer').appendChild(pc);
     };
-    ac.appendChild(b);
+    document.getElementById('alpha-chips').appendChild(b);
   });
 }
 function checkAlpha(){
-  const placed=[...document.querySelectorAll('#alpha-answer .placed-chip')].map(c=>c.textContent).join('');
-  const fb=document.getElementById('alpha-fb');
+  var placed=[].slice.call(document.querySelectorAll('#alpha-answer .placed-chip')).map(function(c){return c.textContent;}).join('');
+  var fb=document.getElementById('alpha-fb');
   fb.style.display='block';
-  if(placed.toLowerCase()==='morning'){
-    fb.className='scr-fb fb-ok'; fb.textContent='🎉 정답! morning = 아침';
-  } else {
-    fb.className='scr-fb fb-ng'; fb.textContent=`"${placed}" → 아직 아니에요. 다시 조합해봐요! (힌트: 아침)`;
-  }
+  if(placed.toLowerCase()==='morning'){ fb.className='scr-fb fb-ok'; fb.textContent='🎉 정답! morning = 아침'; }
+  else { fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" → 다시 조합해봐요! (힌트: 아침)'; }
 }
 function resetAlpha(){
-  document.querySelectorAll('#alpha-chips .word-chip').forEach(b=>b.classList.remove('used'));
+  document.querySelectorAll('#alpha-chips .word-chip').forEach(function(b){b.classList.remove('used');});
   document.getElementById('alpha-answer').innerHTML='';
   document.getElementById('alpha-fb').style.display='none';
 }
-
-// ── STORY FILL ──
 function reveal(el,ans){el.textContent=ans;el.classList.add('revealed');}
 function revealAll(){
-  document.querySelectorAll('.blank:not(.revealed)').forEach(b=>{
-    const a=b.getAttribute('onclick').match(/'([^']+)'/)[1];
+  document.querySelectorAll('.blank:not(.revealed)').forEach(function(b){
+    var a=b.getAttribute('onclick').match(/'([^']+)'/)[1];
     b.textContent=a; b.classList.add('revealed');
   });
 }
 function resetBlanks(){
-  document.querySelectorAll('.blank').forEach(b=>{
-    const a=b.getAttribute('onclick').match(/'([^']+)'/)[1];
+  document.querySelectorAll('.blank').forEach(function(b){
+    var a=b.getAttribute('onclick').match(/'([^']+)'/)[1];
     b.textContent='_'.repeat(a.length); b.classList.remove('revealed');
   });
 }
-
-// ── SCRAMBLE ──
-const scrambles=[
-  {words:['to','too','you','Nice','meet','.'],answer:'Nice to meet you, too.',hint:'만나서 반가워, 나도!'},
-  {words:['Alice','is','My','name'],answer:'My name is Alice.',hint:'내 이름은 앨리스야.'},
-  {words:['your','What\'s','name','?'],answer:"What's your name?",hint:'이름이 뭐야?'},
-  {words:['afternoon','Good','.'],answer:'Good afternoon.',hint:'좋은 오후야.'},
+var scrambles=[
+  {words:['Nice','to','meet','you','.'],answer:'Nice to meet you.',hint:'만나서 반가워.'},
+  {words:['My','name','is','Alice','.'],answer:'My name is Alice.',hint:'내 이름은 앨리스야.'},
+  {words:["What's",'your','name','?'],answer:"What's your name?",hint:'이름이 뭐야?'},
+  {words:['Good','afternoon','.'],answer:'Good afternoon.',hint:'좋은 오후야.'},
 ];
-
 function initScramble(){
-  const area=document.getElementById('scramble-area');
+  var area=document.getElementById('scramble-area');
   area.innerHTML='';
-  scrambles.forEach((s,i)=>{
-    const shuffled=[...s.words].sort(()=>Math.random()-.5);
-    const placed=[];
-    const div=document.createElement('div');
-    div.className='scramble-box';
-    div.innerHTML=`
-      <div style="font-size:.8rem;color:var(--sub);margin-bottom:.55rem;font-family:'Noto Sans KR',sans-serif;">문제 ${i+1} · ${s.hint}</div>
-      <div class="scramble-words" id="chips-${i}">${shuffled.map((w,j)=>`<button class="word-chip" data-w="${w}" data-i="${j}" onclick="placeWord(${i},this)">${w}</button>`).join('')}</div>
-      <div class="answer-area" id="ans-${i}"></div>
-      <div class="scr-btns">
-        <button class="btn-check" onclick="checkScr(${i},'${s.answer.replace(/'/g,"\\'")}')">✓ 확인</button>
-        <button class="btn-reset" onclick="resetScr(${i})">↺ 다시</button>
-      </div>
-      <div id="fb-${i}" class="scr-fb" style="display:none;"></div>`;
+  scrambles.forEach(function(s,i){
+    var sh=s.words.slice().sort(function(){return Math.random()-.5;});
+    var div=document.createElement('div'); div.className='scramble-box';
+    div.innerHTML='<div style="font-size:.8rem;color:var(--sub);margin-bottom:.55rem;font-family:\'Noto Sans KR\',sans-serif;">문제 '+(i+1)+' · '+s.hint+'</div>'
+      +'<div class="scramble-words" id="chips-'+i+'">'+sh.map(function(w){return '<button class="word-chip" data-w="'+w.replace(/"/g,'&quot;')+'" onclick="placeWord('+i+',this)">'+w+'</button>';}).join('')+'</div>'
+      +'<div class="answer-area" id="ans-'+i+'"></div>'
+      +'<div class="scr-btns"><button class="btn-check" onclick="checkScr('+i+',\''+s.answer.replace(/'/g,"\\'")+'\')" >✓ 확인</button>'
+      +'<button class="btn-reset" onclick="resetScr('+i+')">↺ 다시</button></div>'
+      +'<div id="fb-'+i+'" class="scr-fb" style="display:none;"></div>';
     area.appendChild(div);
   });
 }
 function placeWord(qi,btn){
-  if(btn.classList.contains('used'))return;
+  if(btn.classList.contains('used')) return;
   btn.classList.add('used');
-  const pc=document.createElement('button');
-  pc.className='placed-chip'; pc.textContent=btn.dataset.w;
-  pc.onclick=()=>{btn.classList.remove('used');pc.remove();document.getElementById(`fb-${qi}`).style.display='none';};
-  document.getElementById(`ans-${qi}`).appendChild(pc);
+  var pc=document.createElement('button'); pc.className='placed-chip'; pc.textContent=btn.dataset.w;
+  pc.onclick=function(){btn.classList.remove('used');pc.remove();document.getElementById('fb-'+qi).style.display='none';};
+  document.getElementById('ans-'+qi).appendChild(pc);
 }
 function checkScr(qi,ans){
-  const placed=[...document.querySelectorAll(`#ans-${qi} .placed-chip`)].map(c=>c.textContent).join(' ');
-  const fb=document.getElementById(`fb-${qi}`);
-  fb.style.display='block';
-  const norm=s=>s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!]/g,'');
-  if(norm(placed)===norm(ans)){
-    fb.className='scr-fb fb-ok'; fb.textContent=`🎉 정답! "${ans}"`;
-  } else {
-    fb.className='scr-fb fb-ng'; fb.textContent=`"${placed}" → 다시 조합해봐요!`;
-  }
+  var placed=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip')).map(function(c){return c.textContent;}).join(' ');
+  var fb=document.getElementById('fb-'+qi); fb.style.display='block';
+  var norm=function(s){return s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!]/g,'');};
+  if(norm(placed)===norm(ans)){fb.className='scr-fb fb-ok';fb.textContent='🎉 정답! "'+ans+'"';}
+  else{fb.className='scr-fb fb-ng';fb.textContent='"'+placed+'" → 다시 조합해봐요!';}
 }
 function resetScr(qi){
-  document.querySelectorAll(`#chips-${qi} .word-chip`).forEach(b=>b.classList.remove('used'));
-  document.getElementById(`ans-${qi}`).innerHTML='';
-  document.getElementById(`fb-${qi}`).style.display='none';
+  document.querySelectorAll('#chips-'+qi+' .word-chip').forEach(function(b){b.classList.remove('used');});
+  document.getElementById('ans-'+qi).innerHTML='';
+  document.getElementById('fb-'+qi).style.display='none';
 }
-
-// ── QUIZ ──
-const quizzes=[
-  {q:'아침에 처음 만난 친구에게 할 말로 알맞은 것은?',opts:['Good night.','Good morning.','Good afternoon.','Good evening.'],ans:1,fb:'아침(morning)에는 "Good morning."이라고 인사해요!'},
+var quizzes=[
+  {q:'아침에 친구를 만났을 때 하는 인사는?',opts:['Good night.','Good morning.','Good evening.','Good afternoon.'],ans:1,fb:'아침(morning)에는 "Good morning."이라고 인사해요!'},
   {q:'"What\'s your name?"에 대한 알맞은 대답은?',opts:['Nice to meet you.','Good morning!','My name is Amy.','What\'s your bag?'],ans:2,fb:'"My name is ___."로 이름을 말해요!'},
   {q:'"Nice to meet you."에 대한 알맞은 대답은?',opts:['Good night.','What\'s your name?','Nice to meet you, too.','My name is Juno.'],ans:2,fb:'"too"를 붙여서 "나도 만나서 반가워!"라고 대답해요.'},
   {q:'저녁에 하는 인사로 알맞은 것은?',opts:['Good morning.','Good night.','Good evening.','Good afternoon.'],ans:2,fb:'저녁(evening)에는 "Good evening."이에요.'},
@@ -737,56 +734,44 @@ const quizzes=[
   {q:'빈칸에 알맞은 말은?\n"Hello, I\'m Juno. ___________ your name?"\n',opts:["What's","Nice to meet","My name is","Good morning"],ans:0,fb:'"What\'s your name?"으로 이름을 물어봐요!'},
   {q:'소유격 "my"의 뜻은?',opts:['너의','나의','우리의','그의'],ans:1,fb:'"my"는 나의, "your"는 너의 를 뜻해요.'},
   {q:'Fun Talk 2에서 Sam이 Jane Green에게 사인을 받은 때는?',opts:['저녁','점심','오후','아침'],ans:3,fb:'Jane Green이 "Good morning!"이라고 인사했으니까 아침이에요!'},
-  {q:'다음 중 찬트에 나오지 않는 이름은?',opts:['Bora','Hoa','Alice','Sam'],ans:2,fb:'Alice는 Talk Like This에 나오는 이름이에요. 찬트에는 Amy, Juno, Bora, Sam, Eric, Kate, Momo, Hoa가 나와요!'},
-  {q:'알파벳 n,m,g,o,r,i,n을 조합하면?',opts:['evening','morning','meeting','morning'],ans:1,fb:'n-m-g-o-r-i-n → morning (아침)! /t/ 파닉스 단어예요.'},
+  {q:'다음 중 찬트에 나오지 않는 이름은?',opts:['Bora','Hoa','Alice','Sam'],ans:2,fb:'Alice는 Talk Like This에 나오는 이름이에요!'},
+  {q:'알파벳 n,m,g,o,r,i,n을 조합하면?',opts:['evening','morning','meeting','morning'],ans:1,fb:'n-m-g-o-r-i-n → morning (아침)!'},
 ];
-let cur=0,score=0,done=false;
-function initQuiz(){cur=0;score=0;done=false;renderQ();}
+var cur=0,score=0,answered=false;
+function initQuiz(){cur=0;score=0;answered=false;renderQ();}
 function renderQ(){
-  const area=document.getElementById('quiz-area');
-  const bar=document.getElementById('qbar');
+  var area=document.getElementById('quiz-area');
+  var bar=document.getElementById('qbar');
   bar.style.width=(cur/quizzes.length*100)+'%';
   if(cur>=quizzes.length){
-    const pct=Math.round(score/quizzes.length*100);
-    const e=pct>=80?'🎉':pct>=50?'😊':'💪';
-    const m=pct>=80?'완벽해요! 훌륭합니다!':pct>=50?'잘했어요! 조금만 더 연습해요.':'틀린 표현을 다시 복습해봐요!';
-    area.innerHTML=`<div class="result"><div class="res-emoji">${e}</div><div class="res-score">${score} / ${quizzes.length}</div><div class="res-msg">${m}</div><button class="btn-retry" onclick="initQuiz()">다시 도전하기 🔄</button></div>`;
-    bar.style.width='100%';
-    return;
+    var pct=Math.round(score/quizzes.length*100);
+    var e=pct>=80?'🎉':pct>=50?'😊':'💪';
+    var msg=pct>=80?'완벽해요!':pct>=50?'잘했어요!':'다시 복습해봐요!';
+    area.innerHTML='<div class="result"><div class="res-emoji">'+e+'</div><div class="res-score">'+score+' / '+quizzes.length+'</div><div class="res-msg">'+msg+'</div><button class="btn-retry" onclick="initQuiz()">다시 도전 🔄</button></div>';
+    bar.style.width='100%'; return;
   }
-  const q=quizzes[cur];
-  area.innerHTML=`
-    <div class="quiz-num">${cur+1} / ${quizzes.length} 문제</div>
-    <div class="quiz-q">${q.q.replace(/\n/g,'<br>')}</div>
-    <div class="opts">${q.opts.map((o,i)=>`<button class="opt" onclick="pick(${i})">${o}</button>`).join('')}</div>
-    <div class="qfb" id="qfb"></div>
-    <div class="qnav"><div class="qscore">현재 점수 ${score}점</div><button class="btn-nxt" id="qnxt" onclick="nextQ()">다음 →</button></div>`;
+  var q=quizzes[cur];
+  area.innerHTML='<div class="quiz-num">'+(cur+1)+' / '+quizzes.length+' 문제</div>'
+    +'<div class="quiz-q">'+q.q.replace(/\n/g,'<br>')+'</div>'
+    +'<div class="opts">'+q.opts.map(function(o,i){return '<button class="opt" onclick="pick('+i+')">'+o+'</button>';}).join('')+'</div>'
+    +'<div class="qfb" id="qfb"></div>'
+    +'<div class="qnav"><div class="qscore">현재 점수 '+score+'점</div><button class="btn-nxt" id="qnxt" onclick="nextQ()">다음 →</button></div>';
+  answered=false;
 }
 function pick(i){
-  if(done)return; done=true;
-  const q=quizzes[cur];
-  document.querySelectorAll('.opt').forEach((o,j)=>{
+  if(answered) return; answered=true;
+  var q=quizzes[cur];
+  document.querySelectorAll('.opt').forEach(function(o,j){
     o.disabled=true;
-    if(j===q.ans)o.classList.add('ok');
-    else if(j===i)o.classList.add('ng');
+    if(j===q.ans) o.classList.add('ok');
+    else if(j===i) o.classList.add('ng');
   });
-  const fb=document.getElementById('qfb');
+  var fb=document.getElementById('qfb');
   if(i===q.ans){score++;fb.className='qfb fb-ok show';fb.textContent='✓ 정답! '+q.fb;}
   else{fb.className='qfb fb-ng show';fb.textContent='✗ 틀렸어요. '+q.fb;}
   document.getElementById('qnxt').style.display='inline-block';
 }
-function nextQ(){cur++;done=false;renderQ();}
-
-// nav 높이만큼 main padding-top 동적 설정
-function adjustMainPadding(){
-  var nav = document.querySelector('.nav-wrap');
-  var main = document.querySelector('main');
-  if(nav && main){
-    main.style.paddingTop = (nav.offsetHeight + 16) + 'px';
-  }
-}
-window.addEventListener('load', adjustMainPadding);
-window.addEventListener('resize', adjustMainPadding);
+function nextQ(){cur++;answered=false;renderQ();}
 </script>
 </body>
 </html>
