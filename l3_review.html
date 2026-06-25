@@ -179,6 +179,14 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
   .dont-grid{grid-template-columns:repeat(2,1fr);}
   .fur-grid{grid-template-columns:repeat(2,1fr);}
 }
+
+/* 발음 버튼 향상 */
+.spk-btn{position:absolute;top:5px;right:7px;background:none;border:none;font-size:.9rem;cursor:pointer;opacity:.45;transition:all .2s;padding:2px;line-height:1;border-radius:50%;}
+.spk-btn:hover{opacity:1;background:rgba(0,0,0,.07);}
+.spk-btn.pop{transform:scale(1.5);opacity:1;}
+.tts-bar{display:flex;align-items:center;gap:.5rem;background:var(--bl-l,#E3F2FD);border-radius:var(--r-sm,8px);padding:.55rem .85rem;margin-bottom:.85rem;font-size:.8rem;color:var(--bl-d,#0D47A1);font-family:'Noto Sans KR',sans-serif;}
+.tts-dot{width:8px;height:8px;border-radius:50%;background:var(--gn,#2E7D32);animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
 </style>
 </head>
 <body>
@@ -211,7 +219,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 <div id="words" class="panel on">
   <div class="sec">
     <div class="sec-title">New Words — 신출 어휘 12개</div>
-    <div style="font-size:.8rem;color:var(--sub);margin-bottom:.9rem;font-family:'Noto Sans KR',sans-serif;">카드를 탭하면 뜻이 강조돼요 · 🔊 버튼으로 발음을 들어보세요</div>
+    <div class="tts-bar"><span class="tts-dot"></span>🔊 단어 카드를 탭하거나 🔊 버튼을 눌러 영어 발음을 들어보세요 (Chrome · Edge · Whale 지원)</div>
     <div class="vgrid" id="vcards"></div>
   </div>
   <div class="sec">
@@ -498,237 +506,268 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 <footer>Lesson 3 · Don't Sit Here · 4학년 영어 포트폴리오 복습 자료</footer>
 
 <script>
-// ── TAB ──
+function adjustMainPadding(){
+  var n=document.querySelector('.nav-wrap'),m=document.querySelector('main');
+  if(n&&m) m.style.paddingTop=(n.offsetHeight+16)+'px';
+}
+window.addEventListener('load', adjustMainPadding);
+window.addEventListener('resize', adjustMainPadding);
+
+var _ttsV=[],_ttsR=false;
+function _ttsL(){
+  var vs=window.speechSynthesis?window.speechSynthesis.getVoices():[];
+  if(vs.length){_ttsV=vs;_ttsR=true;}
+}
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=function(){_ttsL();};
+  _ttsL();
+}
+function _ttsP(){
+  return _ttsV.find(function(v){return v.lang==='en-US'&&v.localService;})
+      || _ttsV.find(function(v){return v.lang==='en-US';})
+      || _ttsV.find(function(v){return v.lang==='en-GB';})
+      || _ttsV.find(function(v){return v.lang.startsWith('en');})
+      || null;
+}
+function speak(text,rate){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  function _d(){
+    var u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=rate||0.85; u.pitch=1;
+    var v=_ttsP(); if(v) u.voice=v;
+    u.onstart=function(){ window.speechSynthesis.resume(); };
+    window.speechSynthesis.speak(u);
+  }
+  if(!_ttsR){ _ttsL(); }
+  if(!_ttsR){ setTimeout(function(){ _ttsL(); _d(); }, 400); return; }
+  _d();
+}
+function popSpk(btn,word){
+  speak(word);
+  btn.classList.add('pop');
+  setTimeout(function(){ btn.classList.remove('pop'); }, 600);
+}
+
 function go(id,btn){
   window.scrollTo({top:0,behavior:'smooth'});
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('on'); });
+  document.querySelectorAll('.ntab').forEach(function(t){ t.classList.remove('on'); });
   document.getElementById(id).classList.add('on');
   btn.classList.add('on');
   if(id==='quiz') initQuiz();
   if(id==='scramble') initScramble();
-  if(id==='grammar') initGramQ();
+  if(id==='grammar' && typeof initGramQ !== 'undefined') initGramQ();
+  if(id==='words' && typeof initPosQuiz !== 'undefined') initPosQuiz();
 }
 
-// ── NAV 높이 동적 padding ──
-function adjustPadding(){
-  var nav=document.querySelector('.nav-wrap');
-  var main=document.querySelector('main');
-  if(nav&&main) main.style.paddingTop=(nav.offsetHeight+16)+'px';
+function reveal(el,ans){ el.textContent=ans; el.classList.add('revealed'); }
+function revealAll(){
+  document.querySelectorAll('.blank:not(.revealed)').forEach(function(b){
+    var oc=b.getAttribute('onclick');
+    var m=oc.match(/reveal\(this,'([^']+)'\)/)||oc.match(/reveal\(this,`([^`]+)`\)/);
+    if(m){ b.textContent=m[1]; b.classList.add('revealed'); }
+  });
 }
-window.addEventListener('load',adjustPadding);
-window.addEventListener('resize',adjustPadding);
-
-// ── TTS ──
-function speak(text){
-  if(!window.speechSynthesis)return;
-  window.speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(text);
-  u.lang='en-US';u.rate=0.85;
-  var vs=window.speechSynthesis.getVoices();
-  var v=vs.find(x=>x.lang.startsWith('en')&&x.localService)||vs.find(x=>x.lang.startsWith('en'));
-  if(v)u.voice=v;
-  window.speechSynthesis.speak(u);
+function resetBlanks(){
+  document.querySelectorAll('.blank').forEach(function(b){
+    var oc=b.getAttribute('onclick');
+    var m=oc.match(/reveal\(this,'([^']+)'\)/)||oc.match(/reveal\(this,`([^`]+)`\)/);
+    if(m){ b.textContent='_'.repeat(m[1].length); b.classList.remove('revealed'); }
+  });
 }
-window.speechSynthesis&&(window.speechSynthesis.onvoiceschanged=()=>{});
 
-// ── WORD CARDS ──
-const words=[
+function initScramble(){
+  var area=document.getElementById('scramble-area');
+  if(!area) return;
+  area.innerHTML='';
+  scrambles.forEach(function(s,i){
+    var sh=s.words.slice().sort(function(){ return Math.random()-.5; });
+    var div=document.createElement('div');
+    div.className='scramble-box';
+    var chips='';
+    sh.forEach(function(w){
+      chips+='<button class="word-chip" onclick="placeWord('+i+',this)">'+w+'</button>';
+    });
+    div.innerHTML=
+      '<div style="font-size:.8rem;color:var(--sub,#666);margin-bottom:.55rem">'+
+      '문제'+(i+1)+' &middot; '+s.hint+'</div>'+
+      '<div class="scramble-words" id="chips-'+i+'">'+chips+'</div>'+
+      '<div class="answer-area" id="ans-'+i+'"></div>'+
+      '<div class="scr-btns">'+
+      '<button class="btn-check" onclick="checkScr('+i+')">✓ 확인</button>'+
+      '<button class="btn-reset" onclick="resetScr('+i+')">↺ 다시</button>'+
+      '</div>'+
+      '<div id="fb-'+i+'" class="scr-fb" style="display:none"></div>';
+    area.appendChild(div);
+    var chipEls=div.querySelectorAll('.word-chip');
+    chipEls.forEach(function(el,j){ el.dataset.w=sh[j]; });
+  });
+}
+function placeWord(qi,btn){
+  if(btn.classList.contains('used')) return;
+  btn.classList.add('used');
+  var pc=document.createElement('button');
+  pc.className='placed-chip';
+  pc.textContent=btn.dataset.w;
+  pc.onclick=function(){ btn.classList.remove('used'); pc.remove(); document.getElementById('fb-'+qi).style.display='none'; };
+  document.getElementById('ans-'+qi).appendChild(pc);
+}
+function checkScr(qi){
+  var placed=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip')).map(function(c){ return c.textContent; }).join(' ');
+  var fb=document.getElementById('fb-'+qi); fb.style.display='block';
+  var norm=function(s){ return s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!'`]/g,''); };
+  if(norm(placed)===norm(scrambles[qi].answer)){
+    fb.className='scr-fb fb-ok'; fb.textContent='🎉 정답! "'+scrambles[qi].answer+'"';
+  } else {
+    fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" → 다시 조합해봐요!';
+  }
+}
+function resetScr(qi){
+  document.querySelectorAll('#chips-'+qi+' .word-chip').forEach(function(b){ b.classList.remove('used'); });
+  document.getElementById('ans-'+qi).innerHTML='';
+  document.getElementById('fb-'+qi).style.display='none';
+}
+
+var _qC=0,_qS=0,_qA=false;
+function initQuiz(){ _qC=0; _qS=0; _qA=false; renderQ(); }
+function renderQ(){
+  var a=document.getElementById('quiz-area'), b=document.getElementById('qbar');
+  if(!a||!b) return;
+  b.style.width=(_qC/quizzes.length*100)+'%';
+  if(_qC>=quizzes.length){
+    var p=Math.round(_qS/quizzes.length*100);
+    var e=p>=80?'🎉':p>=50?'😊':'💪';
+    var msg=p>=80?'완벽해요! 훌륭합니다!':p>=50?'잘했어요! 조금만 더 연습해요.':'틀린 표현을 다시 복습해봐요!';
+    a.innerHTML='<div class="result"><div class="res-emoji">'+e+'</div>'+
+      '<div class="res-score">'+_qS+' / '+quizzes.length+'</div>'+
+      '<div class="res-msg">'+msg+'</div>'+
+      '<button class="btn-retry" onclick="initQuiz()">다시 도전하기 🔄</button></div>';
+    b.style.width='100%'; return;
+  }
+  var q=quizzes[_qC];
+  var qtext=q.q.split('\n').join('<br>');
+  var opts=q.opts.map(function(o,i){ return '<button class="opt" onclick="pick('+i+')">'+o+'</button>'; }).join('');
+  a.innerHTML='<div class="quiz-num">'+(_qC+1)+' / '+quizzes.length+' 문제</div>'+
+    '<div class="quiz-q">'+qtext+'</div>'+
+    '<div class="opts">'+opts+'</div>'+
+    '<div class="qfb" id="qfb"></div>'+
+    '<div class="qnav"><div class="qscore">현재 점수 '+_qS+'점</div>'+
+    '<button class="btn-nxt" id="qnxt" onclick="nextQ()">다음 →</button></div>';
+  _qA=false;
+}
+function pick(i){
+  if(_qA) return; _qA=true;
+  var q=quizzes[_qC];
+  document.querySelectorAll('.opt').forEach(function(o,j){
+    o.disabled=true;
+    if(j===q.ans) o.classList.add('ok');
+    else if(j===i) o.classList.add('ng');
+  });
+  var fb=document.getElementById('qfb');
+  if(i===q.ans){ _qS++; fb.className='qfb fb-ok show'; fb.textContent='✓ 정답! '+q.fb; }
+  else { fb.className='qfb fb-ng show'; fb.textContent='✗ 틀렸어요. '+q.fb; }
+  document.getElementById('qnxt').style.display='inline-block';
+}
+function nextQ(){ _qC++; _qA=false; renderQ(); }
+
+function initGramQ(){ _gqI=0; _gqD=false; renderGQ(); }
+function renderGQ(){
+  var area=document.getElementById('gram-q-area');
+  if(!area) return;
+  if(_gqI>=gramQs.length){
+    area.innerHTML='<div class="card" style="text-align:center;padding:1.5rem">'+
+      '<div style="font-size:2rem;margin-bottom:.4rem">🎉</div>'+
+      '<div style="font-family:\'Baloo 2\',sans-serif;font-size:1.3rem;font-weight:800">모두 맞혔어요!</div>'+
+      '<button onclick="initGramQ()" style="margin-top:.8rem;padding:.5rem 1.2rem;cursor:pointer;border-radius:8px;border:1.5px solid #ccc">다시 풀기</button></div>';
+    return;
+  }
+  var q=gramQs[_gqI];
+  var btns=q.opts.map(function(o,i){
+    return '<button onclick="pickGQ('+i+')" style="flex:1;min-width:80px;padding:.6rem .5rem;border:1.5px solid #ccc;border-radius:8px;background:#fff;font-size:.9rem;font-weight:700;cursor:pointer">'+o+'</button>';
+  }).join('');
+  area.innerHTML='<div class="card">'+
+    '<div style="font-size:.78rem;color:#666;margin-bottom:.4rem">'+(_gqI+1)+' / '+gramQs.length+'</div>'+
+    '<div style="font-size:1.05rem;font-weight:700;margin-bottom:1rem">'+q.q+'</div>'+
+    '<div style="display:flex;gap:.5rem;flex-wrap:wrap">'+btns+'</div>'+
+    '<div id="gq-fb" style="display:none;margin-top:.7rem;padding:.6rem .85rem;border-radius:8px;font-size:.83rem"></div></div>';
+  _gqD=false;
+}
+function pickGQ(i){
+  if(_gqD) return; _gqD=true;
+  var q=gramQs[_gqI];
+  document.querySelectorAll('#gram-q-area .card button').forEach(function(b,j){
+    b.disabled=true;
+    if(j===q.ans) b.style.background='#E8F5E9';
+    else if(j===i) b.style.background='#FFEBEE';
+  });
+  var fb=document.getElementById('gq-fb'); fb.style.display='block';
+  if(i===q.ans){ fb.style.background='#E8F5E9'; fb.textContent='✓ 정답! '+q.fb; }
+  else { fb.style.background='#FFEBEE'; fb.textContent='✗ 틀렸어요. '+q.fb; }
+  setTimeout(function(){ _gqI++; renderGQ(); }, 1700);
+}
+
+var words=[
   {n:1,en:'careful',ko:'조심하는'},{n:2,en:'drink',ko:'마시다'},
   {n:3,en:'eat',ko:'먹다'},{n:4,en:'enter',ko:'들어가다'},
   {n:5,en:'house',ko:'집'},{n:6,en:'kick',ko:'차다'},
   {n:7,en:'line up',ko:'줄 서다'},{n:8,en:'love',ko:'사랑하다'},
   {n:9,en:'over',ko:'멀리, 반대편에'},{n:10,en:'push',ko:'밀다'},
-  {n:11,en:'talk',ko:'말하다'},{n:12,en:'welcome',ko:'환영하다'},
+  {n:11,en:'talk',ko:'말하다'},{n:12,en:'welcome',ko:'환영하다'}
 ];
-const vc=document.getElementById('vcards');
-words.forEach(w=>{
-  const d=document.createElement('div');
-  d.className='vcard';
-  d.innerHTML=`<button class="spk-btn" onclick="event.stopPropagation();popSpk(this,'${w.en}')">🔊</button><span class="num">${w.n}</span><div class="ven">${w.en}</div><div class="vko">${w.ko}</div><div class="vhint">탭 → 뜻 확인</div>`;
-  d.onclick=()=>{
-    d.classList.toggle('flipped');
-    d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block';
-    speak(w.en);
-  };
+var vc=document.getElementById('vcards');
+if(vc){ words.forEach(function(w){
+  var d=document.createElement('div'); d.className='vcard';
+  d.innerHTML='<button class="spk-btn" onclick="event.stopPropagation();popSpk(this,\''+w.en+'\')">🔊</button>'
+    +'<span class="num">'+w.n+'</span><div class="ven">'+w.en+'</div>'
+    +'<div class="vko">'+w.ko+'</div><div class="vhint">탭 → 뜻 확인</div>';
+  d.onclick=function(){ d.classList.toggle('flipped'); d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block'; speak(w.en); };
   vc.appendChild(d);
-});
-function popSpk(btn,word){speak(word);btn.classList.add('pop');setTimeout(()=>btn.classList.remove('pop'),500);}
+}); }
 
-// ── DON'T CARDS ──
-const donts=[
-  {ico:'🪑',act:'sit',dont:"Don't sit here.",ko:'여기 앉지 마.'},
-  {ico:'🍕',act:'eat',dont:"Don't eat here.",ko:'여기서 먹지 마.'},
-  {ico:'🚪',act:'enter',dont:"Don't enter.",ko:'들어가지 마.'},
-  {ico:'🤜',act:'push',dont:"Don't push.",ko:'밀지 마.'},
-  {ico:'👆',act:'touch',dont:"Don't touch.",ko:'만지지 마.'},
-  {ico:'🥤',act:'drink',dont:"Don't drink here.",ko:'여기서 마시지 마.'},
-  {ico:'💬',act:'talk',dont:"Don't talk here.",ko:'여기서 말하지 마.'},
-  {ico:'🦵',act:'kick',dont:"Don't kick.",ko:'차지 마.'},
+var dontDat=[
+  {ico:'🚶',en:'sit',ko:'앉다'},{ico:'🏃',en:'run',ko:'뛰다'},
+  {ico:'🗣️',en:'talk',ko:'말하다'},{ico:'🥤',en:'drink',ko:'마시다'},
+  {ico:'🍕',en:'eat',ko:'먹다'},{ico:'👊',en:'push',ko:'밀다'},
+  {ico:'⚽',en:'kick',ko:'차다'},{ico:'🚪',en:'enter',ko:'들어가다'}
 ];
-const dc=document.getElementById('dontcards');
-donts.forEach(d=>{
-  const el=document.createElement('div');
-  el.className='dont-card';
-  el.innerHTML=`<div class="dont-ico">${d.ico}</div><div class="dont-action">${d.act}</div><div class="dont-label">${d.dont}</div><div class="dont-ko">${d.ko}</div>`;
-  el.onclick=()=>speak(d.dont);
-  dc.appendChild(el);
-});
+var dc=document.getElementById('dontcards');
+if(dc){ dontDat.forEach(function(w){
+  var d=document.createElement('div'); d.className='dont-card';
+  d.innerHTML='<div class="dont-ico">'+w.ico+'</div><div class="dont-en">'+w.en+'</div>'
+    +'<div class="dont-phrase">Don\'t '+w.en+'!</div><div class="dont-ko">'+w.ko+'</div>';
+  d.onclick=function(){ speak("Don't "+w.en+"."); };
+  dc.appendChild(d);
+}); }
 
-// ── STORY FILL ──
-function reveal(el,ans){el.textContent=ans;el.classList.add('revealed');}
-function revealAll(){
-  document.querySelectorAll('.blank:not(.revealed)').forEach(b=>{
-    const a=b.getAttribute('onclick').match(/'([^']+)'/)[1];
-    b.textContent=a;b.classList.add('revealed');
-  });
-}
-function resetBlanks(){
-  document.querySelectorAll('.blank').forEach(b=>{
-    const a=b.getAttribute('onclick').match(/'([^']+)'/)[1];
-    b.textContent='_'.repeat(a.length);b.classList.remove('revealed');
-  });
-}
-
-// ── GRAMMAR QUIZ ──
-const gramQs=[
+var scrambles=[
+  {words:["Don't",'sit','here','.'],answer:"Don't sit here.",hint:'여기에 앉지 마.'},
+  {words:["Don't",'push','.'],answer:"Don't push.",hint:'밀지 마.'},
+  {words:['Be','careful','.'],answer:'Be careful.',hint:'조심해.'},
+  {words:["Don't",'eat','here','please','.'],answer:"Don't eat here, please.",hint:'여기서 먹지 마세요.'},
+  {words:['Line','up','here','please','.'],answer:'Line up here, please.',hint:'여기에 줄 서 주세요.'},
+  {words:["I'm",'sorry','.'],answer:"I'm sorry.",hint:'미안해요.'}
+];
+var gramQs=[
   {q:"Don't ___ here. (sit)",opts:["Don't sitting here.","Don't sat here.","Don't sit here.","Don't sits here."],ans:2,fb:"Don't 뒤에는 동사 원형 'sit'을 써요!"},
-  {q:"도서관에서 먹지 말라는 표현은?",opts:["Don't eating here.","Don't ate here.","Don't eats here.","Don't eat here."],ans:3,fb:"'eat'의 원형 그대로 써요. Don't eat here."},
-  {q:"'Don't running.'은 왜 틀렸나요?",opts:["push가 빠져서","running이 원형이 아니라서","Don't 대신 Do not을 써야 해서","문장이 너무 짧아서"],ans:1,fb:"Don't 뒤에는 'run'(원형)을 써야 해요. Don't run. ✅"},
-  {q:"'Do not enter.'를 줄여쓰면?",opts:["Not enter.","Don't entering.","Don't enter.","Doesn't enter."],ans:2,fb:"Do not = Don't 이에요! Don't enter. ✅"},
+  {q:'도서관에서 먹지 말라는 표현은?',opts:["Don't eating here.","Don't ate here.","Don't eats here.","Don't eat here."],ans:3,fb:"원형 'eat'을 써요. Don't eat here."},
+  {q:"Do not enter를 줄이면?",opts:["Not enter.","Don't entering.","Don't enter.","Doesn't enter."],ans:2,fb:"Do not = Don't! Don't enter."},
+  {q:"Don't 뒤에 올 수 없는 것은?",opts:['run','sit','eating','push'],ans:2,fb:'eating은 원형이 아니에요. eat을 써야 해요!'}
 ];
-let gqIdx=0,gqDone=false;
-function initGramQ(){gqIdx=0;gqDone=false;renderGQ();}
-function renderGQ(){
-  const area=document.getElementById('gram-q-area');
-  if(gqIdx>=gramQs.length){
-    area.innerHTML=`<div class="card" style="text-align:center;padding:1.5rem;"><div style="font-size:2rem;margin-bottom:.4rem;">🎉</div><div style="font-family:'Baloo 2',sans-serif;font-size:1.3rem;font-weight:800;color:var(--gn);">모두 맞혔어요!</div><div style="font-size:.85rem;color:var(--sub);margin:.4rem 0 1rem;font-family:'Noto Sans KR',sans-serif;">Don't 금지 표현 완벽 이해!</div><button onclick="initGramQ()" style="background:var(--gn-l);color:var(--gn-d);border:1.5px solid var(--gn);border-radius:var(--r-sm);padding:.5rem 1.2rem;font-family:'Baloo 2',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;">다시 풀기</button></div>`;
-    return;
-  }
-  const q=gramQs[gqIdx];
-  area.innerHTML=`<div class="card"><div style="font-size:.78rem;color:var(--sub);margin-bottom:.4rem;">${gqIdx+1} / ${gramQs.length}</div><div style="font-family:'Baloo 2',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:1rem;color:var(--text);">${q.q}</div><div style="display:flex;flex-direction:column;gap:.5rem;">${q.opts.map((o,i)=>`<button onclick="pickGQ(${i})" style="padding:.7rem 1rem;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--white);font-family:'Baloo 2',sans-serif;font-size:.9rem;font-weight:600;color:var(--text);cursor:pointer;text-align:left;transition:all .18s;">${o}</button>`).join('')}</div><div id="gq-fb" style="display:none;margin-top:.7rem;padding:.6rem .85rem;border-radius:var(--r-sm);font-size:.83rem;font-family:'Noto Sans KR',sans-serif;"></div></div>`;
-  gqDone=false;
-}
-function pickGQ(i){
-  if(gqDone)return;gqDone=true;
-  const q=gramQs[gqIdx];
-  const btns=document.querySelectorAll('#gram-q-area button:not([onclick="initGramQ()"])');
-  btns.forEach((b,j)=>{
-    b.disabled=true;
-    if(j===q.ans)b.style.cssText+=';background:var(--gn-l);border-color:var(--gn);color:var(--gn-d);';
-    else if(j===i)b.style.cssText+=';background:var(--rd-l);border-color:var(--rd);color:var(--rd-d);';
-  });
-  const fb=document.getElementById('gq-fb');
-  fb.style.display='block';
-  if(i===q.ans){
-    fb.style.cssText='display:block;margin-top:.7rem;padding:.6rem .85rem;border-radius:var(--r-sm);font-size:.83rem;font-family:"Noto Sans KR",sans-serif;background:var(--gn-l);border-left:3px solid var(--gn);color:var(--gn-d);';
-    fb.textContent='✓ 정답! '+q.fb;
-  }else{
-    fb.style.cssText='display:block;margin-top:.7rem;padding:.6rem .85rem;border-radius:var(--r-sm);font-size:.83rem;font-family:"Noto Sans KR",sans-serif;background:var(--rd-l);border-left:3px solid var(--rd);color:var(--rd-d);';
-    fb.textContent='✗ 틀렸어요. '+q.fb;
-  }
-  setTimeout(()=>{gqIdx++;renderGQ();},1700);
-}
+var _gqI=0,_gqD=false;
+var quizzes=[
+  {q:'"여기에 앉지 마."를 영어로?',opts:["Don't sitting here.","Don't sat here.","Don't sit here.","Sit here not."],ans:2,fb:"Don't + 동사원형! Don't sit here."},
+  {q:'"조심해!"를 영어로?',opts:["Don't careful.","Be careful.","Are careful.","Careful be."],ans:1,fb:'"Be careful." — Be + 형용사로 상태를 표현해요!'},
+  {q:'"I\'m sorry."의 뜻은?',opts:['천만에요.','미안해요.','감사해요.','좋아요.'],ans:1,fb:'"I\'m sorry."는 사과할 때 쓰는 "미안해요."예요!'},
+  {q:'Fun Talk 1에서 Momo가 한 행동으로 잘못된 것은?',opts:['in the bus','on the table','kick the ball','sit on the chair'],ans:2,fb:'Momo가 공을 찼을 때 Mr. Jones가 주의를 줬어요!'},
+  {q:"Don't 다음에 올 수 있는 것은?",opts:['running','run','ran','runs'],ans:1,fb:"Don't 뒤에는 반드시 동사 원형(run)을 써요!"},
+  {q:'"Line up here, please."의 뜻은?',opts:['여기에 앉으세요.','여기에 줄 서 주세요.','여기를 청소해 주세요.','여기서 먹지 마세요.'],ans:1,fb:'"line up"은 줄 서다는 뜻이에요!'},
+  {q:'"Do not"의 줄임말은?',opts:["Do't","Dont","Don't","Dotn't"],ans:2,fb:'Do not = Don\'t (아포스트로피 위치 주의!)'},
+  {q:'찬트에서 "Don\'t kick."에 어울리는 그림은?',opts:['책','공','빵','물'],ans:1,fb:'kick은 발로 차는 것이니까 공이 어울려요!'},
+  {q:'"Be careful."은 어떤 상황에서 쓰나요?',opts:['칭찬할 때','조심하라고 할 때','인사할 때','감사할 때'],ans:1,fb:'"Be careful."은 위험한 상황에서 조심하라고 할 때 써요!'},
+  {q:'"Don\'t run."과 같은 의미의 표현은?',opts:['Run here.','Please run.','Do not run.','Running not.'],ans:2,fb:'"Don\'t = Do not"으로 같은 뜻이에요!'}
+];
 
-// ── SCRAMBLE ──
-const scrambles=[
-  {words:["Don't","sit","here","."],answer:"Don't sit here.",hint:'여기에 앉지 마.'},
-  {words:["Don't","push","."],answer:"Don't push.",hint:'밀지 마.'},
-  {words:["Be","careful","."],answer:"Be careful.",hint:'조심해.'},
-  {words:["Don't","eat","here",",","please","."],answer:"Don't eat here, please.",hint:'여기서 먹지 마세요.'},
-  {words:["Line","up","here",",","please","."],answer:"Line up here, please.",hint:'여기에 줄 서 주세요.'},
-  {words:["I'm","sorry","."],answer:"I'm sorry.",hint:'미안해요.'},
-];
-function initScramble(){
-  const area=document.getElementById('scramble-area');
-  area.innerHTML='';
-  scrambles.forEach((s,i)=>{
-    const sh=[...s.words].sort(()=>Math.random()-.5);
-    const div=document.createElement('div');
-    div.className='scramble-box';
-    div.innerHTML=`
-      <div style="font-size:.8rem;color:var(--sub);margin-bottom:.55rem;font-family:'Noto Sans KR',sans-serif;">문제 ${i+1} · ${s.hint}</div>
-      <div class="scramble-words" id="chips-${i}">${sh.map(w=>`<button class="word-chip" data-w="${w}" onclick="placeWord(${i},this)">${w}</button>`).join('')}</div>
-      <div class="answer-area" id="ans-${i}"></div>
-      <div class="scr-btns">
-        <button class="btn-check" onclick="checkScr(${i},'${s.answer.replace(/'/g,"\\'")}')">✓ 확인</button>
-        <button class="btn-reset" onclick="resetScr(${i})">↺ 다시</button>
-      </div>
-      <div id="fb-${i}" class="scr-fb" style="display:none;"></div>`;
-    area.appendChild(div);
-  });
-}
-function placeWord(qi,btn){
-  if(btn.classList.contains('used'))return;
-  btn.classList.add('used');
-  const pc=document.createElement('button');
-  pc.className='placed-chip';pc.textContent=btn.dataset.w;
-  pc.onclick=()=>{btn.classList.remove('used');pc.remove();document.getElementById(`fb-${qi}`).style.display='none';};
-  document.getElementById(`ans-${qi}`).appendChild(pc);
-}
-function checkScr(qi,ans){
-  const placed=[...document.querySelectorAll(`#ans-${qi} .placed-chip`)].map(c=>c.textContent).join(' ');
-  const fb=document.getElementById(`fb-${qi}`);
-  fb.style.display='block';
-  const norm=s=>s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!]/g,'');
-  if(norm(placed)===norm(ans)){fb.className='scr-fb fb-ok';fb.textContent=`🎉 정답! "${ans}"`;}
-  else{fb.className='scr-fb fb-ng';fb.textContent=`"${placed}" → 다시 조합해봐요!`;}
-}
-function resetScr(qi){
-  document.querySelectorAll(`#chips-${qi} .word-chip`).forEach(b=>b.classList.remove('used'));
-  document.getElementById(`ans-${qi}`).innerHTML='';
-  document.getElementById(`fb-${qi}`).style.display='none';
-}
-
-// ── QUIZ ──
-const quizzes=[
-  {q:'"여기에 앉지 마."를 영어로 하면?',opts:["Don't sitting here.","Don't sit here.","Be sit here.","No sit here."],ans:1,fb:"Don't + 동사원형! Don't sit here. ✅"},
-  {q:'다음 중 올바른 Don\'t 문장은?',opts:["Don't running.","Don't pushed.","Don't touch.","Don't eats here."],ans:2,fb:"Don't 뒤에 원형 touch를 쓴 'Don't touch.'가 맞아요!"},
-  {q:'Fun Talk 1에서 Kate가 준오에게 한 말은?',opts:["Don't push, Juno.","Don't eat here, Juno.","Don't sit here, Juno.","Don't talk, Juno."],ans:2,fb:"Kate: Don't sit here, Juno. 준오가 앉으려 해서 말렸어요."},
-  {q:'"Be careful."의 뜻은?',opts:["줄 서세요.","앉지 마세요.","조심하세요.","들어가세요."],ans:2,fb:'"Be careful."은 "조심해." / "조심하세요."예요.'},
-  {q:'"Don\'t"는 무엇의 줄임말인가요?',opts:["Did not","Do not","Does not","Is not"],ans:1,fb:"Don't = Do not의 줄임말이에요!"},
-  {q:'도서관에서 사서가 에릭에게 한 말은?',opts:["Don't sit here, please.","Don't enter here.","Don't eat here, please.","Don't push, please."],ans:2,fb:"사서: Don't eat here, please. 도서관에서는 음식을 먹으면 안 돼요!"},
-  {q:'청개구리 이야기에서 #1의 빈칸 정답은?',opts:["Don't touch","Don't eat","Don't kick","Don't drink"],ans:1,fb:"누나 개구리: Don't eat this. This is for Dad. 아빠 것을 먹으면 안 돼요!"},
-  {q:'"Line up here, please."의 뜻은?',opts:["여기서 먹지 마세요.","여기에 줄 서 주세요.","저쪽에 앉아 주세요.","여기에 들어오세요."],ans:1,fb:'"line up"은 "줄 서다"예요. Line up here = 여기에 줄 서다.'},
-  {q:'다음 중 "Don\'t"를 올바르게 사용한 것은?',opts:["Don't singing a song.","Don't to run.","Don't sing a song.","Don't is push."],ans:2,fb:"Don't + 동사원형(sing)! Don't sing a song. 노래 부르지 마세요. ✅"},
-  {q:'"You\'re welcome."은 어떤 상황에 쓰나요?',opts:["사과할 때","부탁할 때","감사 인사에 답할 때","인사를 처음 할 때"],ans:2,fb:'"Thank you."에 대한 대답으로 "You\'re welcome.(천만에요.)"을 써요!'},
-];
-let cur=0,score=0,answered=false;
-function initQuiz(){cur=0;score=0;answered=false;renderQ();}
-function renderQ(){
-  const area=document.getElementById('quiz-area');
-  const bar=document.getElementById('qbar');
-  bar.style.width=(cur/quizzes.length*100)+'%';
-  if(cur>=quizzes.length){
-    const pct=Math.round(score/quizzes.length*100);
-    const e=pct>=80?'🎉':pct>=50?'😊':'💪';
-    const m=pct>=80?'완벽해요! 훌륭합니다!':pct>=50?'잘했어요! 조금만 더 연습해요.':'틀린 표현을 다시 복습해봐요!';
-    area.innerHTML=`<div class="result"><div class="res-emoji">${e}</div><div class="res-score">${score} / ${quizzes.length}</div><div class="res-msg">${m}</div><button class="btn-retry" onclick="initQuiz()">다시 도전하기 🔄</button></div>`;
-    bar.style.width='100%';return;
-  }
-  const q=quizzes[cur];
-  area.innerHTML=`
-    <div class="quiz-num">${cur+1} / ${quizzes.length} 문제</div>
-    <div class="quiz-q">${q.q.replace(/\n/g,'<br>')}</div>
-    <div class="opts">${q.opts.map((o,i)=>`<button class="opt" onclick="pick(${i})">${o}</button>`).join('')}</div>
-    <div class="qfb" id="qfb"></div>
-    <div class="qnav"><div class="qscore">현재 점수 ${score}점</div><button class="btn-nxt" id="qnxt" onclick="nextQ()">다음 →</button></div>`;
-  answered=false;
-}
-function pick(i){
-  if(answered)return;answered=true;
-  const q=quizzes[cur];
-  document.querySelectorAll('.opt').forEach((o,j)=>{
-    o.disabled=true;
-    if(j===q.ans)o.classList.add('ok');
-    else if(j===i)o.classList.add('ng');
-  });
-  const fb=document.getElementById('qfb');
-  if(i===q.ans){score++;fb.className='qfb fb-ok show';fb.textContent='✓ 정답! '+q.fb;}
-  else{fb.className='qfb fb-ng show';fb.textContent='✗ 틀렸어요. '+q.fb;}
-  document.getElementById('qnxt').style.display='inline-block';
-}
-function nextQ(){cur++;answered=false;renderQ();}
 </script>
 </body>
 </html>
