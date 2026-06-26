@@ -189,6 +189,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 .tts-bar{display:flex;align-items:center;gap:.5rem;background:var(--bl-l,#E3F2FD);border-radius:var(--r-sm,8px);padding:.55rem .85rem;margin-bottom:.85rem;font-size:.8rem;color:var(--bl-d,#0D47A1);font-family:'Noto Sans KR',sans-serif;}
 .tts-dot{width:8px;height:8px;border-radius:50%;background:var(--gn,#2E7D32);animation:blink 1.2s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+.vcard .vico{font-size:1.8rem;margin:4px 0 2px;line-height:1;display:block;}
 </style>
 </head>
 <body>
@@ -527,8 +528,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 </main>
 <footer>Lesson 6 · Where's My Cap? · 4학년 영어 포트폴리오 복습 자료</footer>
 
-<script>
-function adjustMainPadding(){
+<script>function adjustMainPadding(){
   var n=document.querySelector('.nav-wrap'),m=document.querySelector('main');
   if(n&&m) m.style.paddingTop=(n.offsetHeight+16)+'px';
 }
@@ -604,7 +604,16 @@ function initScramble(){
   if(!area) return;
   area.innerHTML='';
   scrambles.forEach(function(s,i){
-    var sh=s.words.slice().sort(function(){ return Math.random()-.5; });
+    var sh=s.words.slice();
+    var orig=s.words.join('\t');
+    var attempt=0;
+    do {
+      for(var k=sh.length-1;k>0;k--){
+        var j=Math.floor(Math.random()*(k+1));
+        var tmp=sh[k]; sh[k]=sh[j]; sh[j]=tmp;
+      }
+      attempt++;
+    } while(sh.join('\t')===orig && attempt<20 && s.words.length>1);
     var div=document.createElement('div');
     div.className='scramble-box';
     var chips='';
@@ -612,13 +621,12 @@ function initScramble(){
       chips+='<button class="word-chip" onclick="placeWord('+i+',this)">'+w+'</button>';
     });
     div.innerHTML=
-      '<div style="font-size:.8rem;color:var(--sub,#666);margin-bottom:.55rem">'+
-      '문제'+(i+1)+' &middot; '+s.hint+'</div>'+
+      '<div style="font-size:.8rem;color:var(--sub,#666);margin-bottom:.55rem">'+(i+1)+' &middot; '+s.hint+'</div>'+
       '<div class="scramble-words" id="chips-'+i+'">'+chips+'</div>'+
       '<div class="answer-area" id="ans-'+i+'"></div>'+
       '<div class="scr-btns">'+
-      '<button class="btn-check" onclick="checkScr('+i+')">✓ 확인</button>'+
-      '<button class="btn-reset" onclick="resetScr('+i+')">↺ 다시</button>'+
+      '<button class="btn-check" onclick="checkScr('+i+')">&#10003; 확인</button>'+
+      '<button class="btn-reset" onclick="resetScr('+i+')">&#8634; 다시</button>'+
       '</div>'+
       '<div id="fb-'+i+'" class="scr-fb" style="display:none"></div>';
     area.appendChild(div);
@@ -626,6 +634,7 @@ function initScramble(){
     chipEls.forEach(function(el,j){ el.dataset.w=sh[j]; });
   });
 }
+
 function placeWord(qi,btn){
   if(btn.classList.contains('used')) return;
   btn.classList.add('used');
@@ -636,15 +645,17 @@ function placeWord(qi,btn){
   document.getElementById('ans-'+qi).appendChild(pc);
 }
 function checkScr(qi){
-  var placed=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip')).map(function(c){ return c.textContent; }).join(' ');
+  var chips=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip'));
+  var placed=chips.map(function(c){return c.textContent;}).join(' ');
   var fb=document.getElementById('fb-'+qi); fb.style.display='block';
-  var norm=function(s){ return s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!'`]/g,''); };
+  var norm=function(s){ return s.toLowerCase().replace(/[^a-z0-9\uAC00-\uD7A3]/g,' ').replace(/\s+/g,' ').trim(); };
   if(norm(placed)===norm(scrambles[qi].answer)){
-    fb.className='scr-fb fb-ok'; fb.textContent='🎉 정답! "'+scrambles[qi].answer+'"';
+    fb.className='scr-fb fb-ok'; fb.textContent='\uD83C\uDF89 \uc815\ub2f5! "'+scrambles[qi].answer+'"';
   } else {
-    fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" → 다시 조합해봐요!';
+    fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" \u2192 \ub2e4\uc2dc \uc870\ud569\ud574\ubc10\uc694!';
   }
 }
+
 function resetScr(qi){
   document.querySelectorAll('#chips-'+qi+' .word-chip').forEach(function(b){ b.classList.remove('used'); });
   document.getElementById('ans-'+qi).innerHTML='';
@@ -730,39 +741,32 @@ function pickGQ(i){
 }
 
 var words=[
-  {n:1,en:'bed',ko:'침대'},{n:2,en:'box',ko:'상자'},
-  {n:3,en:'bus',ko:'버스'},{n:4,en:'chair',ko:'의자'},
-  {n:5,en:'desk',ko:'책상'},{n:6,en:'fan',ko:'부채'},
-  {n:7,en:'know',ko:'알다'},{n:8,en:'table',ko:'탁자'},
-  {n:9,en:'under',ko:'아래에'},{n:10,en:'where',ko:'어디에'}
+  {n:1,en:'bed',ko:'침대',ico:'🛏️'},
+  {n:2,en:'box',ko:'상자',ico:'📦'},
+  {n:3,en:'bus',ko:'버스',ico:'🚌'},
+  {n:4,en:'chair',ko:'의자',ico:'🪑'},
+  {n:5,en:'desk',ko:'책상',ico:'🖥️'},
+  {n:6,en:'fan',ko:'부채',ico:'🌬️'},
+  {n:7,en:'know',ko:'알다',ico:'💡'},
+  {n:8,en:'table',ko:'탁자',ico:'🪴'},
+  {n:9,en:'under',ko:'아래에',ico:'⬇️'},
+  {n:10,en:'where',ko:'어디에',ico:'🔍'}
 ];
 var vc=document.getElementById('vcards');
 if(vc){ words.forEach(function(w){
   var d=document.createElement('div'); d.className='vcard';
   d.innerHTML='<button class="spk-btn" onclick="event.stopPropagation();popSpk(this,\''+w.en+'\')">🔊</button>'
-    +'<span class="num">'+w.n+'</span><div class="ven">'+w.en+'</div>'
-    +'<div class="vko">'+w.ko+'</div><div class="vhint">탭 → 뜻 확인</div>';
-  d.onclick=function(){ d.classList.toggle('flipped'); d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block'; speak(w.en); };
+    +'<span class="num">'+w.n+'</span>'
+    +'<div class="vico">'+w.ico+'</div>'
+    +'<div class="ven">'+w.en+'</div>'
+    +'<div class="vko">'+w.ko+'</div>'
+    +'<div class="vhint">탭 → 뜻 확인</div>';
+  d.onclick=function(){
+    d.classList.toggle('flipped');
+    d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block';
+    speak(w.en);
+  };
   vc.appendChild(d);
-}); }
-
-var prepDat=[
-  {ico:'📦',en:'in',ko:'~ 안에',ex:'in the box',color:'var(--bl-d,#0D47A1)'},
-  {ico:'🪑',en:'on',ko:'~ 위에',ex:'on the table',color:'var(--cy-d,#006064)'},
-  {ico:'⬇️',en:'under',ko:'~ 아래에',ex:'under the chair',color:'var(--pu-d,#4A148C)'},
-  {ico:'↔️',en:'between',ko:'~ 사이에',ex:'between A and B',color:'var(--gn-d,#1B5E20)'},
-  {ico:'⬆️',en:'in front of',ko:'~ 앞에',ex:'in front of the desk',color:'var(--or-d,#E65100)'},
-  {ico:'🔙',en:'behind',ko:'~ 뒤에',ex:'behind the chair',color:'var(--rd-d,#7F0000)'},
-  {ico:'↩️',en:'beside',ko:'~ 옆에',ex:'beside the bed',color:'var(--tl-d,#004D40)'}
-];
-var pg=document.getElementById('prep-grid');
-if(pg){ prepDat.forEach(function(p){
-  var el=document.createElement('div'); el.className='prep-card';
-  el.innerHTML='<div style="font-size:2rem;margin-bottom:.3rem">'+p.ico+'</div>'
-    +'<div class="prep-en" style="color:'+p.color+'">'+p.en+'</div>'
-    +'<div class="prep-ko">'+p.ko+'</div><div class="prep-ex">'+p.ex+'</div>';
-  el.onclick=function(){ speak(p.ex); };
-  pg.appendChild(el);
 }); }
 
 var posQs=[
@@ -833,7 +837,6 @@ var quizzes=[
   {q:'"Where is"를 줄이면?',opts:["Where're","Where's","Wher's","Where've"],ans:1,fb:'Where is → Where\'s! 아포스트로피로 줄여요.'},
   {q:'"It\'s on the table."에서 전치사는?',opts:['in','under','on','beside'],ans:2,fb:'"on"은 위에! It\'s on the table. = 탁자 위에 있어.'}
 ];
-
 </script>
 </body>
 </html>
