@@ -189,6 +189,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 .tts-bar{display:flex;align-items:center;gap:.5rem;background:var(--bl-l,#E3F2FD);border-radius:var(--r-sm,8px);padding:.55rem .85rem;margin-bottom:.85rem;font-size:.8rem;color:var(--bl-d,#0D47A1);font-family:'Noto Sans KR',sans-serif;}
 .tts-dot{width:8px;height:8px;border-radius:50%;background:var(--gn,#2E7D32);animation:blink 1.2s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+.vcard .vico{font-size:1.8rem;margin:4px 0 2px;line-height:1;display:block;}
 </style>
 </head>
 <body>
@@ -496,8 +497,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 </main>
 <footer>Lesson 2 · I'm Happy · 4학년 영어 포트폴리오 복습 자료</footer>
 
-<script>
-function adjustMainPadding(){
+<script>function adjustMainPadding(){
   var n=document.querySelector('.nav-wrap'),m=document.querySelector('main');
   if(n&&m) m.style.paddingTop=(n.offsetHeight+16)+'px';
 }
@@ -573,7 +573,16 @@ function initScramble(){
   if(!area) return;
   area.innerHTML='';
   scrambles.forEach(function(s,i){
-    var sh=s.words.slice().sort(function(){ return Math.random()-.5; });
+    var sh=s.words.slice();
+    var orig=s.words.join('\t');
+    var attempt=0;
+    do {
+      for(var k=sh.length-1;k>0;k--){
+        var j=Math.floor(Math.random()*(k+1));
+        var tmp=sh[k]; sh[k]=sh[j]; sh[j]=tmp;
+      }
+      attempt++;
+    } while(sh.join('\t')===orig && attempt<20 && s.words.length>1);
     var div=document.createElement('div');
     div.className='scramble-box';
     var chips='';
@@ -581,13 +590,12 @@ function initScramble(){
       chips+='<button class="word-chip" onclick="placeWord('+i+',this)">'+w+'</button>';
     });
     div.innerHTML=
-      '<div style="font-size:.8rem;color:var(--sub,#666);margin-bottom:.55rem">'+
-      '문제'+(i+1)+' &middot; '+s.hint+'</div>'+
+      '<div style="font-size:.8rem;color:var(--sub,#666);margin-bottom:.55rem">'+(i+1)+' &middot; '+s.hint+'</div>'+
       '<div class="scramble-words" id="chips-'+i+'">'+chips+'</div>'+
       '<div class="answer-area" id="ans-'+i+'"></div>'+
       '<div class="scr-btns">'+
-      '<button class="btn-check" onclick="checkScr('+i+')">✓ 확인</button>'+
-      '<button class="btn-reset" onclick="resetScr('+i+')">↺ 다시</button>'+
+      '<button class="btn-check" onclick="checkScr('+i+')">&#10003; 확인</button>'+
+      '<button class="btn-reset" onclick="resetScr('+i+')">&#8634; 다시</button>'+
       '</div>'+
       '<div id="fb-'+i+'" class="scr-fb" style="display:none"></div>';
     area.appendChild(div);
@@ -595,6 +603,7 @@ function initScramble(){
     chipEls.forEach(function(el,j){ el.dataset.w=sh[j]; });
   });
 }
+
 function placeWord(qi,btn){
   if(btn.classList.contains('used')) return;
   btn.classList.add('used');
@@ -605,15 +614,17 @@ function placeWord(qi,btn){
   document.getElementById('ans-'+qi).appendChild(pc);
 }
 function checkScr(qi){
-  var placed=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip')).map(function(c){ return c.textContent; }).join(' ');
+  var chips=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip'));
+  var placed=chips.map(function(c){return c.textContent;}).join(' ');
   var fb=document.getElementById('fb-'+qi); fb.style.display='block';
-  var norm=function(s){ return s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!'`]/g,''); };
+  var norm=function(s){ return s.toLowerCase().replace(/[^a-z0-9\uAC00-\uD7A3]/g,' ').replace(/\s+/g,' ').trim(); };
   if(norm(placed)===norm(scrambles[qi].answer)){
-    fb.className='scr-fb fb-ok'; fb.textContent='🎉 정답! "'+scrambles[qi].answer+'"';
+    fb.className='scr-fb fb-ok'; fb.textContent='\uD83C\uDF89 \uc815\ub2f5! "'+scrambles[qi].answer+'"';
   } else {
-    fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" → 다시 조합해봐요!';
+    fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" \u2192 \ub2e4\uc2dc \uc870\ud569\ud574\ubc10\uc694!';
   }
 }
+
 function resetScr(qi){
   document.querySelectorAll('#chips-'+qi+' .word-chip').forEach(function(b){ b.classList.remove('used'); });
   document.getElementById('ans-'+qi).innerHTML='';
@@ -699,19 +710,31 @@ function pickGQ(i){
 }
 
 var words=[
-  {n:1,en:'again',ko:'다시'},{n:2,en:'angry',ko:'화난'},
-  {n:3,en:'happy',ko:'기쁜'},{n:4,en:'sad',ko:'슬픈'},
-  {n:5,en:'sleepy',ko:'졸린'},{n:6,en:'some',ko:'조금'},
-  {n:7,en:'thirsty',ko:'목이 마른'},{n:8,en:'tired',ko:'피곤한'},
-  {n:9,en:'try',ko:'시도하다'},{n:10,en:'water',ko:'물'}
+  {n:1,en:'again',ko:'다시',ico:'🔄'},
+  {n:2,en:'angry',ko:'화난',ico:'😠'},
+  {n:3,en:'happy',ko:'기쁜',ico:'😊'},
+  {n:4,en:'sad',ko:'슬픈',ico:'😢'},
+  {n:5,en:'sleepy',ko:'졸린',ico:'😴'},
+  {n:6,en:'some',ko:'조금',ico:'🤏'},
+  {n:7,en:'thirsty',ko:'목이 마른',ico:'🥤'},
+  {n:8,en:'tired',ko:'피곤한',ico:'😩'},
+  {n:9,en:'try',ko:'시도하다',ico:'💪'},
+  {n:10,en:'water',ko:'물',ico:'💧'}
 ];
 var vc=document.getElementById('vcards');
 if(vc){ words.forEach(function(w){
   var d=document.createElement('div'); d.className='vcard';
   d.innerHTML='<button class="spk-btn" onclick="event.stopPropagation();popSpk(this,\''+w.en+'\')">🔊</button>'
-    +'<span class="num">'+w.n+'</span><div class="ven">'+w.en+'</div>'
-    +'<div class="vko">'+w.ko+'</div><div class="vhint">탭 → 뜻 확인</div>';
-  d.onclick=function(){ d.classList.toggle('flipped'); d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block'; speak(w.en); };
+    +'<span class="num">'+w.n+'</span>'
+    +'<div class="vico">'+w.ico+'</div>'
+    +'<div class="ven">'+w.en+'</div>'
+    +'<div class="vko">'+w.ko+'</div>'
+    +'<div class="vhint">탭 → 뜻 확인</div>';
+  d.onclick=function(){
+    d.classList.toggle('flipped');
+    d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block';
+    speak(w.en);
+  };
   vc.appendChild(d);
 }); }
 
@@ -756,7 +779,6 @@ var quizzes=[
   {q:'be동사 "is"와 함께 쓸 수 없는 주어는?',opts:['he','she','it','they'],ans:3,fb:'they는 복수라서 are를 써요. They are sleepy.'},
   {q:'"물이 조금 있어."를 영어로?',opts:['I have some water.','I have water some.','Some water I have.','Water have I some.'],ans:0,fb:'"I have some water." — some은 명사 앞에 써요!'}
 ];
-
 </script>
 </body>
 </html>
