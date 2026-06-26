@@ -187,6 +187,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 .tts-bar{display:flex;align-items:center;gap:.5rem;background:var(--bl-l,#E3F2FD);border-radius:var(--r-sm,8px);padding:.55rem .85rem;margin-bottom:.85rem;font-size:.8rem;color:var(--bl-d,#0D47A1);font-family:'Noto Sans KR',sans-serif;}
 .tts-dot{width:8px;height:8px;border-radius:50%;background:var(--gn,#2E7D32);animation:blink 1.2s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+.vcard .vico{font-size:1.8rem;margin:4px 0 2px;line-height:1;display:block;}
 </style>
 </head>
 <body>
@@ -505,8 +506,7 @@ footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--sub);}
 </main>
 <footer>Lesson 3 · Don't Sit Here · 4학년 영어 포트폴리오 복습 자료</footer>
 
-<script>
-function adjustMainPadding(){
+<script>function adjustMainPadding(){
   var n=document.querySelector('.nav-wrap'),m=document.querySelector('main');
   if(n&&m) m.style.paddingTop=(n.offsetHeight+16)+'px';
 }
@@ -582,7 +582,16 @@ function initScramble(){
   if(!area) return;
   area.innerHTML='';
   scrambles.forEach(function(s,i){
-    var sh=s.words.slice().sort(function(){ return Math.random()-.5; });
+    var sh=s.words.slice();
+    var orig=s.words.join('\t');
+    var attempt=0;
+    do {
+      for(var k=sh.length-1;k>0;k--){
+        var j=Math.floor(Math.random()*(k+1));
+        var tmp=sh[k]; sh[k]=sh[j]; sh[j]=tmp;
+      }
+      attempt++;
+    } while(sh.join('\t')===orig && attempt<20 && s.words.length>1);
     var div=document.createElement('div');
     div.className='scramble-box';
     var chips='';
@@ -590,13 +599,12 @@ function initScramble(){
       chips+='<button class="word-chip" onclick="placeWord('+i+',this)">'+w+'</button>';
     });
     div.innerHTML=
-      '<div style="font-size:.8rem;color:var(--sub,#666);margin-bottom:.55rem">'+
-      '문제'+(i+1)+' &middot; '+s.hint+'</div>'+
+      '<div style="font-size:.8rem;color:var(--sub,#666);margin-bottom:.55rem">'+(i+1)+' &middot; '+s.hint+'</div>'+
       '<div class="scramble-words" id="chips-'+i+'">'+chips+'</div>'+
       '<div class="answer-area" id="ans-'+i+'"></div>'+
       '<div class="scr-btns">'+
-      '<button class="btn-check" onclick="checkScr('+i+')">✓ 확인</button>'+
-      '<button class="btn-reset" onclick="resetScr('+i+')">↺ 다시</button>'+
+      '<button class="btn-check" onclick="checkScr('+i+')">&#10003; 확인</button>'+
+      '<button class="btn-reset" onclick="resetScr('+i+')">&#8634; 다시</button>'+
       '</div>'+
       '<div id="fb-'+i+'" class="scr-fb" style="display:none"></div>';
     area.appendChild(div);
@@ -604,6 +612,7 @@ function initScramble(){
     chipEls.forEach(function(el,j){ el.dataset.w=sh[j]; });
   });
 }
+
 function placeWord(qi,btn){
   if(btn.classList.contains('used')) return;
   btn.classList.add('used');
@@ -614,15 +623,17 @@ function placeWord(qi,btn){
   document.getElementById('ans-'+qi).appendChild(pc);
 }
 function checkScr(qi){
-  var placed=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip')).map(function(c){ return c.textContent; }).join(' ');
+  var chips=[].slice.call(document.querySelectorAll('#ans-'+qi+' .placed-chip'));
+  var placed=chips.map(function(c){return c.textContent;}).join(' ');
   var fb=document.getElementById('fb-'+qi); fb.style.display='block';
-  var norm=function(s){ return s.replace(/\s+/g,' ').trim().toLowerCase().replace(/[.,?!'`]/g,''); };
+  var norm=function(s){ return s.toLowerCase().replace(/[^a-z0-9\uAC00-\uD7A3]/g,' ').replace(/\s+/g,' ').trim(); };
   if(norm(placed)===norm(scrambles[qi].answer)){
-    fb.className='scr-fb fb-ok'; fb.textContent='🎉 정답! "'+scrambles[qi].answer+'"';
+    fb.className='scr-fb fb-ok'; fb.textContent='\uD83C\uDF89 \uc815\ub2f5! "'+scrambles[qi].answer+'"';
   } else {
-    fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" → 다시 조합해봐요!';
+    fb.className='scr-fb fb-ng'; fb.textContent='"'+placed+'" \u2192 \ub2e4\uc2dc \uc870\ud569\ud574\ubc10\uc694!';
   }
 }
+
 function resetScr(qi){
   document.querySelectorAll('#chips-'+qi+' .word-chip').forEach(function(b){ b.classList.remove('used'); });
   document.getElementById('ans-'+qi).innerHTML='';
@@ -708,22 +719,37 @@ function pickGQ(i){
 }
 
 var words=[
-  {n:1,en:'careful',ko:'조심하는'},{n:2,en:'drink',ko:'마시다'},
-  {n:3,en:'eat',ko:'먹다'},{n:4,en:'enter',ko:'들어가다'},
-  {n:5,en:'house',ko:'집'},{n:6,en:'kick',ko:'차다'},
-  {n:7,en:'line up',ko:'줄 서다'},{n:8,en:'love',ko:'사랑하다'},
-  {n:9,en:'over',ko:'멀리, 반대편에'},{n:10,en:'push',ko:'밀다'},
-  {n:11,en:'talk',ko:'말하다'},{n:12,en:'welcome',ko:'환영하다'}
+  {n:1,en:'careful',ko:'조심하는',ico:'⚠️'},
+  {n:2,en:'drink',ko:'마시다',ico:'🥤'},
+  {n:3,en:'eat',ko:'먹다',ico:'🍽️'},
+  {n:4,en:'enter',ko:'들어가다',ico:'🚪'},
+  {n:5,en:'house',ko:'집',ico:'🏠'},
+  {n:6,en:'kick',ko:'차다',ico:'👟'},
+  {n:7,en:'line up',ko:'줄 서다',ico:'🚶'},
+  {n:8,en:'love',ko:'사랑하다',ico:'❤️'},
+  {n:9,en:'over',ko:'멀리 반대편에',ico:'↗️'},
+  {n:10,en:'push',ko:'밀다',ico:'✋'},
+  {n:11,en:'talk',ko:'말하다',ico:'💬'},
+  {n:12,en:'welcome',ko:'환영하다',ico:'🎉'}
 ];
+
 var vc=document.getElementById('vcards');
 if(vc){ words.forEach(function(w){
   var d=document.createElement('div'); d.className='vcard';
   d.innerHTML='<button class="spk-btn" onclick="event.stopPropagation();popSpk(this,\''+w.en+'\')">🔊</button>'
-    +'<span class="num">'+w.n+'</span><div class="ven">'+w.en+'</div>'
-    +'<div class="vko">'+w.ko+'</div><div class="vhint">탭 → 뜻 확인</div>';
-  d.onclick=function(){ d.classList.toggle('flipped'); d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block'; speak(w.en); };
+    +'<span class="num">'+w.n+'</span>'
+    +'<div class="vico">'+w.ico+'</div>'
+    +'<div class="ven">'+w.en+'</div>'
+    +'<div class="vko">'+w.ko+'</div>'
+    +'<div class="vhint">탭 → 뜻 확인</div>';
+  d.onclick=function(){
+    d.classList.toggle('flipped');
+    d.querySelector('.vhint').style.display=d.classList.contains('flipped')?'none':'block';
+    speak(w.en);
+  };
   vc.appendChild(d);
 }); }
+
 
 var dontDat=[
   {ico:'🚶',en:'sit',ko:'앉다'},{ico:'🏃',en:'run',ko:'뛰다'},
@@ -734,11 +760,14 @@ var dontDat=[
 var dc=document.getElementById('dontcards');
 if(dc){ dontDat.forEach(function(w){
   var d=document.createElement('div'); d.className='dont-card';
-  d.innerHTML='<div class="dont-ico">'+w.ico+'</div><div class="dont-en">'+w.en+'</div>'
-    +'<div class="dont-phrase">Don\'t '+w.en+'!</div><div class="dont-ko">'+w.ko+'</div>';
+  d.innerHTML='<div class="dont-ico">'+w.ico+'</div>'
+    +'<div class="dont-en">'+w.en+'</div>'
+    +'<div class="dont-phrase">Don\'t '+w.en+'!</div>'
+    +'<div class="dont-ko">'+w.ko+'</div>';
   d.onclick=function(){ speak("Don't "+w.en+"."); };
   dc.appendChild(d);
 }); }
+
 
 var scrambles=[
   {words:["Don't",'sit','here','.'],answer:"Don't sit here.",hint:'여기에 앉지 마.'},
@@ -748,6 +777,8 @@ var scrambles=[
   {words:['Line','up','here','please','.'],answer:'Line up here, please.',hint:'여기에 줄 서 주세요.'},
   {words:["I'm",'sorry','.'],answer:"I'm sorry.",hint:'미안해요.'}
 ];
+
+
 var gramQs=[
   {q:"Don't ___ here. (sit)",opts:["Don't sitting here.","Don't sat here.","Don't sit here.","Don't sits here."],ans:2,fb:"Don't 뒤에는 동사 원형 'sit'을 써요!"},
   {q:'도서관에서 먹지 말라는 표현은?',opts:["Don't eating here.","Don't ate here.","Don't eats here.","Don't eat here."],ans:3,fb:"원형 'eat'을 써요. Don't eat here."},
@@ -755,6 +786,11 @@ var gramQs=[
   {q:"Don't 뒤에 올 수 없는 것은?",opts:['run','sit','eating','push'],ans:2,fb:'eating은 원형이 아니에요. eat을 써야 해요!'}
 ];
 var _gqI=0,_gqD=false;
+
+var _gqI=0,_gqD=false;
+
+var _qC=0,_qS=0,_qA=false;
+
 var quizzes=[
   {q:'"여기에 앉지 마."를 영어로?',opts:["Don't sitting here.","Don't sat here.","Don't sit here.","Sit here not."],ans:2,fb:"Don't + 동사원형! Don't sit here."},
   {q:'"조심해!"를 영어로?',opts:["Don't careful.","Be careful.","Are careful.","Careful be."],ans:1,fb:'"Be careful." — Be + 형용사로 상태를 표현해요!'},
@@ -766,8 +802,6 @@ var quizzes=[
   {q:'찬트에서 "Don\'t kick."에 어울리는 그림은?',opts:['책','공','빵','물'],ans:1,fb:'kick은 발로 차는 것이니까 공이 어울려요!'},
   {q:'"Be careful."은 어떤 상황에서 쓰나요?',opts:['칭찬할 때','조심하라고 할 때','인사할 때','감사할 때'],ans:1,fb:'"Be careful."은 위험한 상황에서 조심하라고 할 때 써요!'},
   {q:'"Don\'t run."과 같은 의미의 표현은?',opts:['Run here.','Please run.','Do not run.','Running not.'],ans:2,fb:'"Don\'t = Do not"으로 같은 뜻이에요!'}
-];
-
-</script>
+];</script>
 </body>
 </html>
