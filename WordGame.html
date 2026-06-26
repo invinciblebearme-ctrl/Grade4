@@ -36,8 +36,8 @@
 
     /* ── 카메라 배경 ── */
     #cameraBackground {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      object-fit: cover; z-index: -1; transform: scaleX(-1);
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover; z-index: 0; transform: scaleX(-1);
     }
 
     /* ── 손 포인터 ── */
@@ -46,7 +46,7 @@
       background: rgba(255,255,255,0.7);
       border: 4px solid var(--or); border-radius: 50%;
       transform: translate(-50%, -50%);
-      z-index: 50;
+      z-index: 60;
       box-shadow: 0 0 20px rgba(230,81,0,0.6), inset 0 0 10px #FFF;
       pointer-events: none; display: none;
       backdrop-filter: blur(3px);
@@ -60,7 +60,7 @@
 
     /* ── 1인 UI ── */
     #uiContainer1P {
-      position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
       text-align: center; z-index: 10; display: none;
     }
     #targetMeaning1P {
@@ -84,6 +84,7 @@
       color: var(--or-d); display: none;
       border: 2px solid var(--border);
       box-shadow: var(--shadow);
+      z-index: 10;
     }
 
     /* ── 2인 경계선 ── */
@@ -92,7 +93,7 @@
       background: repeating-linear-gradient(
         to bottom, var(--or) 0, var(--or) 24px, transparent 24px, transparent 50px
       );
-      z-index: 5; transform: translateX(-50%); border-radius: 8px;
+      z-index: 6; transform: translateX(-50%); border-radius: 8px;
       filter: drop-shadow(0 0 8px rgba(230,81,0,0.6));
     }
     #vsBadge {
